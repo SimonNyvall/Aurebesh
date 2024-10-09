@@ -1,46 +1,8 @@
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
+#include "history/commandHistory.h"
 #include "shell.h"
-
-char *readLine()
-{
-    int bufSize = 1024;
-    int position = 0;
-    char *buffer = (char *)malloc(sizeof(char) * bufSize);
-    int c;
-
-    if (!buffer)
-    {
-        std::cerr << "Allocation error" << std::endl;
-        exit(EXIT_FAILURE);
-    }
-
-    while (1)
-    {
-        c = getchar();
-        if (c == EOF || c == '\n')
-        {
-            buffer[position] = '\0';
-            return buffer;
-        }
-        else
-        {
-            buffer[position] = c;
-        }
-        position++;
-        if (position >= bufSize)
-        {
-            bufSize += 1024;
-            buffer = (char *)realloc(buffer, bufSize);
-            if (!buffer)
-            {
-                std::cerr << "Allocation error" << std::endl;
-                exit(EXIT_FAILURE);
-            }
-        }
-    }
-}
 
 char **splitLine(char *line)
 {
@@ -77,6 +39,54 @@ char **splitLine(char *line)
 
     tokens[position] = nullptr;
     return tokens;
+}
+
+char *readLine()
+{
+    int bufSize = 1024;
+    int position = 0;
+    char *buffer = (char *)malloc(sizeof(char) * bufSize);
+    int c;
+
+    if (!buffer)
+    {
+        std::cerr << "Allocation error" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    while (1)
+    {
+        c = getchar();
+        if (c == EOF || c == '\n')
+        {
+            buffer[position] = '\0';
+
+            char *bufferCopy = strdup(buffer);
+            char **command = splitLine(bufferCopy);
+            globalCommandHistory.addCommand(command);
+
+            free(bufferCopy);
+
+            return buffer;
+        }
+        else
+        {
+            buffer[position] = c;
+        }
+
+        position++;
+
+        if (position >= bufSize)
+        {
+            bufSize += 1024;
+            buffer = (char *)realloc(buffer, bufSize);
+            if (!buffer)
+            {
+                std::cerr << "Allocation error" << std::endl;
+                exit(EXIT_FAILURE);
+            }
+        }
+    }
 }
 
 char ***splitPipe(char *line, int *numCommands)
