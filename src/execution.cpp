@@ -16,13 +16,13 @@ int shellLaunch(char **args)
     {
         if (execvp(args[0], args) == -1)
         {
-            perror("shell");
+            perror("mudsh");
         }
         exit(EXIT_FAILURE);
     }
     else if (pid < 0)
     {
-        perror("shell");
+        perror("mudsh");
     }
     else
     {
@@ -84,12 +84,12 @@ int executePipeChain(char ***commands, int numCommands)
 
             close(pipefd[0]);
             execvp(commands[i][0], commands[i]);
-            perror("shell");
+            perror("mudsh");
             exit(EXIT_FAILURE);
         }
         else if (pid < 0)
         {
-            perror("shell");
+            perror("mudsh");
             exit(EXIT_FAILURE);
         }
 
