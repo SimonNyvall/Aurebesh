@@ -42,9 +42,9 @@ int execute(char **args) {
 }
 
 int executePipeChain(char ***commands, int numCommands) {
-    int pipefd[2], prevPipefd[2];
+    int pipefd[2];
     pid_t pid;
-
+    int prevPipeReadEnd = 0;
     for (int i = 0; i < numCommands; i++) {
         if (i < numCommands - 1) {
             if (pipe(pipefd) == -1) {
@@ -55,39 +55,34 @@ int executePipeChain(char ***commands, int numCommands) {
 
         pid = fork();
 
-        if (pid == 0) {
-            if (i > 0) {
-                dup2(prevPipefd[0], STDIN_FILENO);
-                close(prevPipefd[0]);
+        if (pid == 0) { 
+            if (i > 0) { 
+                dup2(prevPipeReadEnd, STDIN_FILENO); 
+            }
+            if (i < numCommands - 1) { 
+                dup2(pipefd[1], STDOUT_FILENO); 
             }
 
-            if (i < numCommands - 1) {
-                dup2(pipefd[1], STDOUT_FILENO);
-                close(pipefd[1]);
-            }
-
-            execvp(commands[i][0], commands[i]);
-            perror("shell");
-            exit(EXIT_FAILURE);
-        } else if (pid < 0) {
+            close(pipefd[0]);
+            execvp(commands[i][0], commands[i]); 
+            perror("shell"); 
+            exit(EXIT_FAILURE); 
+        } else if (pid < 0) { 
             perror("shell");
             exit(EXIT_FAILURE);
         }
 
         if (i > 0) {
-            close(prevPipefd[0]);
+            close(prevPipeReadEnd); 
         }
         if (i < numCommands - 1) {
-            close(pipefd[1]);
+            close(pipefd[1]); 
         }
 
-        if (i > 0) {
-            prevPipefd[0] = pipefd[0];
-            prevPipefd[1] = pipefd[1];
-        }
-
+        prevPipeReadEnd = pipefd[0]; 
         waitpid(pid, nullptr, 0);
     }
 
-    return 1;
+    return 1; 
 }
+

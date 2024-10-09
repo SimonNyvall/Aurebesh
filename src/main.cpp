@@ -34,10 +34,15 @@ void shellLoop() {
             status = execute(commands[0]);
         }
 
-        free(line);
-        free(commands);
+        for (int i = 0; i < numCommands; i++) {
+            free(commands[i]); 
+        }
+        free(commands); 
+
+        free(line); 
     } while (status);
 }
+
 
 int main() {
     shellLoop();
