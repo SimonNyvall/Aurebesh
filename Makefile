@@ -5,7 +5,11 @@ CFLAGS = -Wall -g
 TARGET = mudshell
 
 # Source files
-SRCS = src/main.cpp src/builtin.cpp src/execution.cpp src/input.cpp src/commandHistory.cpp
+SRCS = src/main.cpp \
+       src/builtin.cpp \
+       src/execution.cpp \
+       src/input.cpp \
+       src/history/commandHistory.cpp
 
 # Object files
 OBJS = $(SRCS:.cpp=.o)
