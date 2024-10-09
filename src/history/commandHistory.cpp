@@ -63,3 +63,18 @@ char **CommandHistory::getCommand()
 
     return history.back();
 }
+
+void CommandHistory::printHistory()
+{
+    for (int i = 0; i < history.size(); i++)
+    {
+        char **command = history[i];
+
+        for (int j = 0; command[j] != nullptr; j++)
+        {
+            std::cout << command[j] << " ";
+        }
+
+        std::cout << std::endl;
+    }
+}

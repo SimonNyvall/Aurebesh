@@ -15,6 +15,7 @@ class CommandHistory
         char **copyCommand(char **command);
         void addCommand(char **command);
         char **getCommand();
+        void printHistory();
 };
 
 extern CommandHistory globalCommandHistory;
