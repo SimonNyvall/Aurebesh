@@ -59,27 +59,6 @@ char **splitLine(char *line)
     return tokens;
 }
 
-char* concatenateCharArray(char **array) {
-    std::size_t totalSize = 0;
-    for (int i = 0; array[i] != nullptr; i++) {
-        totalSize += strlen(array[i]) + 1;
-    }
-
-    char *result = (char*)malloc(totalSize * sizeof(char));
-    if (!result) {
-        std::cerr << "Memory allocation error." << std::endl;
-        exit(EXIT_FAILURE);
-    }
-    result[0] = '\0';
-
-    for (int i = 0; array[i] != nullptr; i++) {
-        strcat(result, array[i]);
-        strcat(result, " ");
-    }
-
-    return result;
-}
-
 int handleEscChars(char *buffer, int *position, int *historyPosition)
 {
     char seq[3];
@@ -93,7 +72,7 @@ int handleEscChars(char *buffer, int *position, int *historyPosition)
 
     if (seq[1] == 'A') // Up arrow
     {
-        *historyPosition = *historyPosition + 1;
+        *historyPosition = *historyPosition + 1; // Check if we are at the end of the history
         const char *lastCommand = globalCommandHistory.getCommand(*historyPosition);
 
         if (!lastCommand)
@@ -113,6 +92,33 @@ int handleEscChars(char *buffer, int *position, int *historyPosition)
         for (int i = 0; i < *position; i++)
         {
             std::cout << "\b"; 
+        }
+
+        return 0;
+    }
+
+    if (seq[1] == 'B') // Down arrow
+    {
+        *historyPosition = *historyPosition - 1; // Check so we don't go out of bounds of the history
+        const char *lastCommand = globalCommandHistory.getCommand(*historyPosition);
+
+        if (!lastCommand)
+        {
+            return 0;
+        }
+
+        std::cout << "\r\033[K"; // Clear the current line
+        printInLinePromt();
+
+        std::cout << lastCommand;
+
+        strncpy(buffer, lastCommand, 1024);
+        buffer[1023] = '\0';
+        *position = strlen(lastCommand);
+
+        for (int i = 0; i < *position; i++)
+        {
+            std::cout << "\b";
         }
 
         return 0;
