@@ -82,7 +82,7 @@ char **splitLine(char *line)
 char ***splitPipe(char *line, int *numCommands)
 {
     int bufSize = 64;
-    int position = 0; 
+    int position = 0;
     char ***commands = (char ***)malloc(bufSize * sizeof(char **));
 
     if (!commands)
@@ -91,19 +91,19 @@ char ***splitPipe(char *line, int *numCommands)
         exit(EXIT_FAILURE);
     }
 
-    char *start = line; 
-    char *pipePos; 
+    char *start = line;
+    char *pipePos;
 
     // Loop to find "|>" in the input line
     while ((pipePos = strstr(start, "|>")) != nullptr)
     {
         *pipePos = '\0';
-        commands[position++] = splitLine(start); 
-        start = pipePos + 2; 
-        
+        commands[position++] = splitLine(start);
+        start = pipePos + 2;
+
         if (position >= bufSize)
         {
-            bufSize += 64; 
+            bufSize += 64;
             commands = (char ***)realloc(commands, bufSize * sizeof(char **));
             if (!commands)
             {
@@ -113,11 +113,12 @@ char ***splitPipe(char *line, int *numCommands)
         }
     }
 
-    if (*start != '\0') {
+    if (*start != '\0')
+    {
         commands[position++] = splitLine(start);
     }
 
-    commands[position] = nullptr; 
+    commands[position] = nullptr;
     *numCommands = position;
 
     return commands;

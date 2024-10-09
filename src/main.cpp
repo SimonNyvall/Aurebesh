@@ -4,47 +4,56 @@
 #include <unistd.h>
 #include "shell.h"
 
-char *workingDirectory() {
+char *workingDirectory()
+{
     char *cwd = (char *)malloc(1024);
     getcwd(cwd, 1024);
     char *home = getenv("HOME");
 
-    if (strstr(cwd, home) != nullptr) {
+    if (strstr(cwd, home) != nullptr)
+    {
         return strstr(cwd, home) + strlen(home);
     }
 
     return cwd;
 }
 
-void shellLoop() {
+void shellLoop()
+{
     char *line;
     char ***commands;
     int numCommands;
     int status;
 
-    do {
-        std::cout << "\n" << workingDirectory() << " : ";
+    do
+    {
+        std::cout << "\n"
+                  << workingDirectory() << " : ";
         line = readLine();
 
         commands = splitPipe(line, &numCommands);
 
-        if (numCommands > 1) {
+        if (numCommands > 1)
+        {
             status = executePipeChain(commands, numCommands);
-        } else {
+        }
+        else
+        {
             status = execute(commands[0]);
         }
 
-        for (int i = 0; i < numCommands; i++) {
-            free(commands[i]); 
+        for (int i = 0; i < numCommands; i++)
+        {
+            free(commands[i]);
         }
-        free(commands); 
+        free(commands);
 
-        free(line); 
+        free(line);
     } while (status);
 }
 
-
-int main() {
+int main()
+{
     shellLoop();
     return 0;
 }

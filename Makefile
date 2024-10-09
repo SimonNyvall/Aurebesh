@@ -1,14 +1,11 @@
-# Compiler
 CC = g++
 
-# Compiler flags
 CFLAGS = -Wall -g
 
-# Target executable
 TARGET = mudshell
 
 # Source files
-SRCS = src/main.cpp src/builtin.cpp src/execution.cpp src/input.cpp
+SRCS = src/main.cpp src/builtin.cpp src/execution.cpp src/input.cpp src/commandHistory.cpp
 
 # Object files
 OBJS = $(SRCS:.cpp=.o)
@@ -21,6 +18,5 @@ $(TARGET): $(OBJS)
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Clean up object files and the target executable
 clean:
 	rm -f $(OBJS) $(TARGET)
