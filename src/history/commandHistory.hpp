@@ -3,18 +3,19 @@
 
 #include <deque>
 #include <cstring>
+#include <string>
 
 class CommandHistory 
 {
     private:
-        std::deque<char **> history;
+        std::deque<std::string> history;
         int maxSize;
 
     public:
         CommandHistory(int maxSize);
         char **copyCommand(char **command);
-        void addCommand(char **command);
-        char **getCommand();
+        void addCommand(const char *command);
+        const char *getCommand(int position);
         void printHistory();
 };
 

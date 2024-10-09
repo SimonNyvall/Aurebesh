@@ -1,8 +1,8 @@
-#include "commandHistory.h"
+#include "commandHistory.hpp"
 #include <iostream>
 #include <cstring>
 
-CommandHistory globalCommandHistory(5);
+CommandHistory globalCommandHistory(20);
 
 CommandHistory::CommandHistory(int maxSize)
 {
@@ -30,51 +30,30 @@ char **CommandHistory::copyCommand(char **command)
     return commandCopy;
 }
 
-void CommandHistory::addCommand(char **command)
+void CommandHistory::addCommand(const char *command)
 {
-    char **commandCopy = copyCommand(command);
-
-    if (history.size() == maxSize)
+    if (history.size() >= maxSize) 
     {
-        char **oldCommand = history.front();
-
-        if (command != nullptr)
-        {
-            for (int i = 0; command[i] != nullptr; i++)
-            {
-                free(command[i]);
-            }
-
-            delete[] command;
-        }
-
         history.pop_front();
     }
 
-    history.push_back(commandCopy);
+    history.push_back(command);
 }
 
-char **CommandHistory::getCommand()
+const char *CommandHistory::getCommand(int position)
 {
-    if (history.empty())
+    if (position <= 0 || position > history.size())
     {
         return nullptr;
     }
 
-    return history.back();
+    return history[history.size() - position].c_str();
 }
 
 void CommandHistory::printHistory()
 {
     for (int i = 0; i < history.size(); i++)
     {
-        char **command = history[i];
-
-        for (int j = 0; command[j] != nullptr; j++)
-        {
-            std::cout << command[j] << " ";
-        }
-
-        std::cout << std::endl;
+        std::cout << i + 1 << " " << history[i] << std::endl;
     }
 }

@@ -3,7 +3,7 @@
 #include <cstring>
 #include <unistd.h>
 #include <termios.h>
-#include "history/commandHistory.h"
+#include "history/commandHistory.hpp"
 #include "shell.h"
 #include "promt/promt.h"
 
@@ -80,7 +80,7 @@ char* concatenateCharArray(char **array) {
     return result;
 }
 
-int handleEscChars(char *buffer, int *position)
+int handleEscChars(char *buffer, int *position, int *historyPosition)
 {
     char seq[3];
     seq[0] = getchar();
@@ -93,7 +93,8 @@ int handleEscChars(char *buffer, int *position)
 
     if (seq[1] == 'A') // Up arrow
     {
-        char **lastCommand = globalCommandHistory.getCommand();
+        *historyPosition = *historyPosition + 1;
+        const char *lastCommand = globalCommandHistory.getCommand(*historyPosition);
 
         if (!lastCommand)
         {
@@ -103,19 +104,17 @@ int handleEscChars(char *buffer, int *position)
         std::cout << "\r\033[K"; // Clear the current line
         printInLinePromt(); 
 
-        char *commandStr = concatenateCharArray(lastCommand);
-        std::cout << commandStr;
+        std::cout << lastCommand;
 
-        strncpy(buffer, commandStr, 1024);
+        strncpy(buffer, lastCommand, 1024);
         buffer[1023] = '\0';
-        *position = strlen(commandStr); 
+        *position = strlen(lastCommand); 
 
         for (int i = 0; i < *position; i++)
         {
             std::cout << "\b"; 
         }
 
-        free(commandStr);
         return 0;
     }
 
@@ -147,6 +146,7 @@ char *readLine()
     char *buffer = (char *)malloc(sizeof(char) * bufSize);
     int c;
     struct termios orig_termios;
+    int historyPosition = 0;
 
     enableRawMode(orig_termios);
 
@@ -163,19 +163,20 @@ char *readLine()
         if (c == EOF || c == '\n') // Check for EOF or Enter key
         {
             buffer[position] = '\0';
-            char *bufferCopy = strdup(buffer);
-            char **command = splitLine(bufferCopy);
+            char *command = strdup(buffer);
             globalCommandHistory.addCommand(command);
 
-            free(bufferCopy);
+            free(command);
             disableRawMode(orig_termios);
+
+            historyPosition = 0;
 
             std::cout << "\n"; 
             return buffer; 
         }
         else if (c == '\033') // ESC key
         {
-            handleEscChars(buffer, &position);
+            handleEscChars(buffer, &position, &historyPosition);
         }
         else if (c == 127) // Backspace key
         {

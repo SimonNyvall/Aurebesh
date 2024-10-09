@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "shell.h"
-#include "history/commandHistory.h"
+#include "history/commandHistory.hpp"
 
 const char *builtIn_string[] = {
     "cd",
