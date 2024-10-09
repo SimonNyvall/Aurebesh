@@ -80,14 +80,18 @@ char* concatenateCharArray(char **array) {
     return result;
 }
 
-
 int handleEscChars(char *buffer, int *position)
 {
     char seq[3];
     seq[0] = getchar();
     seq[1] = getchar();
 
-    if (seq[0] == '[' && seq[1] == 'A')
+    if (seq[0] != '[')
+    {
+        return 1;
+    }
+
+    if (seq[1] == 'A') // Up arrow
     {
         char **lastCommand = globalCommandHistory.getCommand();
 
@@ -96,21 +100,44 @@ int handleEscChars(char *buffer, int *position)
             return 0;
         }
 
-        // clear the line and rewrite the current directory
-
-        std::cout << "\r\033[K"; // Clear the line
-        printInLinePromt();
+        std::cout << "\r\033[K"; // Clear the current line
+        printInLinePromt(); 
 
         char *commandStr = concatenateCharArray(lastCommand);
         std::cout << commandStr;
 
-        strcpy(buffer, commandStr);
-        *position = strlen(commandStr);
+        strncpy(buffer, commandStr, 1024);
+        buffer[1023] = '\0';
+        *position = strlen(commandStr); 
+
+        for (int i = 0; i < *position; i++)
+        {
+            std::cout << "\b"; 
+        }
 
         free(commandStr);
-
         return 0;
     }
+
+    if (seq[1] == 'D') // Left arrow
+    {
+        if (*position > 0) // Ensure the cursor cannot move past the promt line
+        {
+            std::cout << "\b"; // Move cursor left
+            (*position)--;
+        }
+    }
+
+    if (seq[1] == 'C') // Right arrow
+    {
+        if (*position < strlen(buffer))
+        {
+            std::cout << buffer[*position]; 
+            (*position)++;
+        }
+    }
+
+    return 1; 
 }
 
 char *readLine()
@@ -133,20 +160,9 @@ char *readLine()
     {
         c = getchar();
 
-        if (c == '\033') // ESC key
-        {
-            int result = handleEscChars(buffer, &position);
-
-            if (result == 0)
-            {
-                continue;
-            }
-        }
-
-        if (c == EOF || c == '\n')
+        if (c == EOF || c == '\n') // Check for EOF or Enter key
         {
             buffer[position] = '\0';
-
             char *bufferCopy = strdup(buffer);
             char **command = splitLine(bufferCopy);
             globalCommandHistory.addCommand(command);
@@ -154,17 +170,31 @@ char *readLine()
             free(bufferCopy);
             disableRawMode(orig_termios);
 
-            std::cout << "\n";
-
-            return buffer;
+            std::cout << "\n"; 
+            return buffer; 
         }
-        else
+        else if (c == '\033') // ESC key
         {
-            buffer[position] = c;
-            std::cout << (char)c;
+            handleEscChars(buffer, &position);
         }
-
-        position++;
+        else if (c == 127) // Backspace key
+        {
+            if (position > 0)
+            {
+                position--;
+                buffer[position] = '\0';
+                std::cout << "\b \b"; 
+            }
+        }
+        else 
+        {
+            if (position < bufSize - 1) 
+            {
+                buffer[position] = c;
+                std::cout << (char)c; 
+                position++;
+            }
+        }
 
         if (position >= bufSize)
         {
@@ -178,6 +208,8 @@ char *readLine()
         }
     }
 }
+
+
 
 char ***splitPipe(char *line, int *numCommands)
 {
