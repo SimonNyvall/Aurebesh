@@ -1,8 +1,26 @@
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
+#include <unistd.h>
+#include <termios.h>
 #include "history/commandHistory.h"
 #include "shell.h"
+#include "promt/promt.h"
+
+void enableRawMode(struct termios &orig_termios)
+{
+    struct termios raw;
+
+    tcgetattr(STDIN_FILENO, &orig_termios);
+    raw = orig_termios;
+    raw.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+}
+
+void disableRawMode(struct termios &orig_termios)
+{
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
+}
 
 char **splitLine(char *line)
 {
@@ -41,12 +59,69 @@ char **splitLine(char *line)
     return tokens;
 }
 
+char* concatenateCharArray(char **array) {
+    std::size_t totalSize = 0;
+    for (int i = 0; array[i] != nullptr; i++) {
+        totalSize += strlen(array[i]) + 1;
+    }
+
+    char *result = (char*)malloc(totalSize * sizeof(char));
+    if (!result) {
+        std::cerr << "Memory allocation error." << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    result[0] = '\0';
+
+    for (int i = 0; array[i] != nullptr; i++) {
+        strcat(result, array[i]);
+        strcat(result, " ");
+    }
+
+    return result;
+}
+
+
+int handleEscChars(char *buffer, int *position)
+{
+    char seq[3];
+    seq[0] = getchar();
+    seq[1] = getchar();
+
+    if (seq[0] == '[' && seq[1] == 'A')
+    {
+        char **lastCommand = globalCommandHistory.getCommand();
+
+        if (!lastCommand)
+        {
+            return 0;
+        }
+
+        // clear the line and rewrite the current directory
+
+        std::cout << "\r\033[K"; // Clear the line
+        printInLinePromt();
+
+        char *commandStr = concatenateCharArray(lastCommand);
+        std::cout << commandStr;
+
+        strcpy(buffer, commandStr);
+        *position = strlen(commandStr);
+
+        free(commandStr);
+
+        return 0;
+    }
+}
+
 char *readLine()
 {
     int bufSize = 1024;
     int position = 0;
     char *buffer = (char *)malloc(sizeof(char) * bufSize);
     int c;
+    struct termios orig_termios;
+
+    enableRawMode(orig_termios);
 
     if (!buffer)
     {
@@ -57,6 +132,17 @@ char *readLine()
     while (1)
     {
         c = getchar();
+
+        if (c == '\033') // ESC key
+        {
+            int result = handleEscChars(buffer, &position);
+
+            if (result == 0)
+            {
+                continue;
+            }
+        }
+
         if (c == EOF || c == '\n')
         {
             buffer[position] = '\0';
@@ -66,12 +152,16 @@ char *readLine()
             globalCommandHistory.addCommand(command);
 
             free(bufferCopy);
+            disableRawMode(orig_termios);
+
+            std::cout << "\n";
 
             return buffer;
         }
         else
         {
             buffer[position] = c;
+            std::cout << (char)c;
         }
 
         position++;

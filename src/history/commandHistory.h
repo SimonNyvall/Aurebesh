@@ -1,21 +1,20 @@
 #ifndef COMMAND_HISTORY_H
 #define COMMAND_HISTORY_H
 
-#include <stack>
+#include <deque>
 #include <cstring>
 
 class CommandHistory 
 {
     private:
-        std::stack<char **> history;
+        std::deque<char **> history;
         int maxSize;
 
     public:
         CommandHistory(int maxSize);
+        char **copyCommand(char **command);
         void addCommand(char **command);
         char **getCommand();
-        void clearHistory();
-        ~CommandHistory();
 };
 
 extern CommandHistory globalCommandHistory;

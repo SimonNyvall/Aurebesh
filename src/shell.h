@@ -10,7 +10,6 @@ char ***splitPipe(char *line, int *numCommands);
 int executePipeChain(char ***commands, int numCommands);
 int shellLaunch(char **args);
 int execute(char **args);
-char *workingDirectory();
 void shellLoop();
 
 extern const char *builtIn_string[];
