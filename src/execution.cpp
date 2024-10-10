@@ -35,22 +35,35 @@ int shellLaunch(char **args)
     return 1;
 }
 
-int execute(char **args)
-{
-    if (args[0] == nullptr)
-    {
-        return 1;
+int execute(char **args) {
+    pid_t pid, wpid;
+    int status;
+
+    if (args[0] == nullptr) {
+        return 1; 
     }
 
-    for (int i = 0; i < shell_num_builtins(); i++)
-    {
-        if (strcmp(args[0], builtIn_string[i]) == 0)
-        {
-            return (*builtIn_string_func[i])(args);
+    for (int i = 0; i < shell_num_builtins(); i++) {
+        if (strcmp(args[0], builtIn_string[i]) == 0) {
+            return builtIn_string_func[i](args); 
         }
     }
 
-    return shellLaunch(args);
+    pid = fork();
+    if (pid == 0) {
+        // In the child process
+        if (execvp(args[0], args) == -1) {
+            perror("Error executing command");
+        }
+        exit(EXIT_FAILURE); 
+    } else if (pid < 0) {
+        perror("Error forking");
+    } else {
+        do {
+            wpid = waitpid(pid, &status, WUNTRACED);
+        } while (!WIFEXITED(status) && !WIFSIGNALED(status));
+    }
+    return 1;
 }
 
 int executePipeChain(char ***commands, int numCommands)

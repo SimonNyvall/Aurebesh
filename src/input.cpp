@@ -27,35 +27,83 @@ char **splitLine(char *line)
     int bufSize = 64;
     int position = 0;
     char **tokens = (char **)malloc(bufSize * sizeof(char *));
-    char *token;
+    char *currentToken = (char *)malloc(256);
+    bool inQuotes = false;
+    int currentPos = 0;
 
-    if (!tokens)
+    if (!tokens || !currentToken)
     {
         std::cerr << "Allocation error" << std::endl;
         exit(EXIT_FAILURE);
     }
 
-    token = strtok(line, " \t\r\n\a");
-    while (token != nullptr)
+    for (int i = 0; line[i] != '\0'; i++)
     {
-        tokens[position] = token;
-        position++;
+        char currentChar = line[i];
 
-        if (position >= bufSize)
+        if (currentChar == '"')
         {
-            bufSize += 64;
-            tokens = (char **)realloc(tokens, bufSize * sizeof(char *));
-            if (!tokens)
+            inQuotes = !inQuotes;
+            continue;
+        }
+
+        if (inQuotes)
+        {
+            currentToken[currentPos++] = currentChar;
+        }
+        else
+        {
+            if (currentChar == ' ' || currentChar == '\t' || currentChar == '\n')
+            {
+                if (currentPos > 0)
+                {
+                    currentToken[currentPos] = '\0';
+                    tokens[position++] = strdup(currentToken);
+                    currentPos = 0;
+
+                    if (position >= bufSize)
+                    {
+                        bufSize += 64;
+                        tokens = (char **)realloc(tokens, bufSize * sizeof(char *));
+                        if (!tokens)
+                        {
+                            std::cerr << "Allocation error" << std::endl;
+                            exit(EXIT_FAILURE);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                currentToken[currentPos++] = currentChar;
+            }
+        }
+
+        if (currentPos >= 256)
+        {
+            std::cerr << "Token size exceeded, reallocating..." << std::endl;
+            currentToken = (char *)realloc(currentToken, (currentPos + 1) * sizeof(char));
+            if (!currentToken)
             {
                 std::cerr << "Allocation error" << std::endl;
                 exit(EXIT_FAILURE);
             }
         }
+    }
 
-        token = strtok(nullptr, " \t\r\n\a");
+    if (currentPos > 0)
+    {
+        currentToken[currentPos] = '\0';
+        tokens[position++] = strdup(currentToken);
+    }
+
+    if (inQuotes)
+    {
+        std::cerr << "Warning: Unclosed quotes detected." << std::endl;
     }
 
     tokens[position] = nullptr;
+    free(currentToken);
     return tokens;
 }
 
@@ -87,17 +135,17 @@ int handleEscChars(char *buffer, int *position, int *historyPosition)
         }
 
         std::cout << "\r\033[K"; // Clear the current line
-        printInLinePromt(); 
+        printInLinePromt();
 
         std::cout << lastCommand;
 
         strncpy(buffer, lastCommand, 1024);
         buffer[1023] = '\0';
-        *position = strlen(lastCommand); 
+        *position = strlen(lastCommand);
 
         for (int i = 0; i < *position; i++)
         {
-            std::cout << "\b"; 
+            std::cout << "\b";
         }
 
         return 0;
@@ -114,7 +162,7 @@ int handleEscChars(char *buffer, int *position, int *historyPosition)
             return 0;
         }
 
-        *historyPosition = *historyPosition - 1; 
+        *historyPosition = *historyPosition - 1;
 
         const char *lastCommand = globalCommandHistory.getCommand(*historyPosition);
 
@@ -153,12 +201,12 @@ int handleEscChars(char *buffer, int *position, int *historyPosition)
     {
         if (*position < strlen(buffer))
         {
-            std::cout << buffer[*position]; 
+            std::cout << buffer[*position];
             (*position)++;
         }
     }
 
-    return 1; 
+    return 1;
 }
 
 char *readLine()
@@ -193,8 +241,8 @@ char *readLine()
 
             historyPosition = 0;
 
-            std::cout << "\n"; 
-            return buffer; 
+            std::cout << "\n";
+            return buffer;
         }
         else if (c == '\033') // ESC key
         {
@@ -206,15 +254,15 @@ char *readLine()
             {
                 position--;
                 buffer[position] = '\0';
-                std::cout << "\b \b"; 
+                std::cout << "\b \b";
             }
         }
-        else 
+        else
         {
-            if (position < bufSize - 1) 
+            if (position < bufSize - 1)
             {
                 buffer[position] = c;
-                std::cout << (char)c; 
+                std::cout << (char)c;
                 position++;
             }
         }
@@ -231,8 +279,6 @@ char *readLine()
         }
     }
 }
-
-
 
 char ***splitPipe(char *line, int *numCommands)
 {
