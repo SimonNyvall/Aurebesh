@@ -266,7 +266,7 @@ std::string gitStatus()
         result += s;
     }
 
-    return " [" + result + "] ";
+    return " [" + result + "]";
 }
 
 void printNewLinePromt()
@@ -286,7 +286,7 @@ void printNewLinePromt()
                   << boldCode
                   << gitStatus()
                   << resetCode
-                  << "~> ";
+                  << " ~> ";
         return;
     }
 
