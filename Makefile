@@ -11,7 +11,6 @@ SRCS = src/main.cpp \
        src/input.cpp \
        src/history/commandHistory.cpp \
 	   src/promt/promt.cpp \
-	   src/promt/workingDirectory.cpp
 
 # Object files
 OBJS = $(SRCS:.cpp=.o)

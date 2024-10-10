@@ -3,6 +3,5 @@
 
 void printInLinePromt();
 void printNewLinePromt();
-char *workingDirectory();
 
 #endif
