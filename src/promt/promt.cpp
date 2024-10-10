@@ -266,7 +266,7 @@ std::string gitStatus()
         result += s;
     }
 
-    return result;
+    return " [" + result + "] ";
 }
 
 void printNewLinePromt()
@@ -284,9 +284,7 @@ void printNewLinePromt()
                   << resetCode
                   << redCode
                   << boldCode
-                  << " ["
                   << gitStatus()
-                  << "] "
                   << resetCode
                   << "~> ";
         return;
@@ -298,5 +296,23 @@ void printNewLinePromt()
 
 void printInLinePromt()
 {
+    if (isInGitRepository())
+    {
+        std::cout << lightBlueCode
+                  << workingDirectoryFromGit()
+                  << resetCode
+                  << " on "
+                  << purpleCode
+                  << " "
+                  << currentGitBranchName()
+                  << resetCode
+                  << redCode
+                  << boldCode
+                  << gitStatus()
+                  << resetCode
+                  << " ~> ";
+        return;
+    }
+
     std::cout << lightBlueCode << workingDirectory() << resetCode << " ~> ";
 }
