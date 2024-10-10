@@ -18,6 +18,11 @@ void shellLoop()
         line = readLine();
         commands = splitPipe(line, &numCommands);
 
+        if (!commands)
+        {
+            continue;
+        }
+
         if (numCommands > 1)
         {
             status = executePipeChain(commands, numCommands);

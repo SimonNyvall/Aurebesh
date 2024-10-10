@@ -232,6 +232,13 @@ char *readLine()
 
         if (c == EOF || c == '\n') // Check for EOF or Enter key
         {
+            if (position == 0)
+            {
+                buffer[position] = '\0';
+                std::cout << "\n";
+                return nullptr;
+            }
+
             buffer[position] = '\0';
             char *command = strdup(buffer);
             globalCommandHistory.addCommand(command);
@@ -282,6 +289,11 @@ char *readLine()
 
 char ***splitPipe(char *line, int *numCommands)
 {
+    if (!line)
+    {
+        return nullptr;
+    }
+
     int bufSize = 64;
     int position = 0;
     char ***commands = (char ***)malloc(bufSize * sizeof(char **));
