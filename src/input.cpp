@@ -72,7 +72,13 @@ int handleEscChars(char *buffer, int *position, int *historyPosition)
 
     if (seq[1] == 'A') // Up arrow
     {
-        *historyPosition = *historyPosition + 1; // Check if we are at the end of the history
+        if (globalCommandHistory.size() == *historyPosition)
+        {
+            return 0;
+        }
+
+        *historyPosition = *historyPosition + 1;
+
         const char *lastCommand = globalCommandHistory.getCommand(*historyPosition);
 
         if (!lastCommand)
@@ -99,7 +105,17 @@ int handleEscChars(char *buffer, int *position, int *historyPosition)
 
     if (seq[1] == 'B') // Down arrow
     {
-        *historyPosition = *historyPosition - 1; // Check so we don't go out of bounds of the history
+        if (*historyPosition == 1)
+        {
+            std::cout << "\r\033[K"; // Clear the current line
+            printInLinePromt();
+            *historyPosition = *historyPosition - 1;
+
+            return 0;
+        }
+
+        *historyPosition = *historyPosition - 1; 
+
         const char *lastCommand = globalCommandHistory.getCommand(*historyPosition);
 
         if (!lastCommand)

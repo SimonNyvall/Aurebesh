@@ -57,3 +57,8 @@ void CommandHistory::printHistory()
         std::cout << i + 1 << " " << history[i] << std::endl;
     }
 }
+
+int CommandHistory::size()
+{
+    return history.size();
+}

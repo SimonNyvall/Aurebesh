@@ -17,6 +17,7 @@ class CommandHistory
         void addCommand(const char *command);
         const char *getCommand(int position);
         void printHistory();
+        int size();
 };
 
 extern CommandHistory globalCommandHistory;
