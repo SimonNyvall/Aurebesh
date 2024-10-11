@@ -175,7 +175,7 @@ bool hasGitUntrackedChanges()
     return !result.empty() && result.find("??") != std::string::npos;
 }
 
-bool hasGitStagedChanges()
+bool hasGitStagedChanges() // TODO: This is not working properly
 {
     FILE *file = popen("git status -sb 2>/dev/null", "r");
     char buffer[128];
@@ -269,50 +269,100 @@ std::string gitStatus()
     return " [" + result + "]";
 }
 
-void printNewLinePromt()
+std::string getPromt()
 {
+    std::string promt;
+
     if (isInGitRepository())
     {
-        std::cout << "\n"
-                  << lightBlueCode
-                  << workingDirectoryFromGit()
-                  << resetCode
-                  << " on "
-                  << purpleCode
-                  << " "
-                  << currentGitBranchName()
-                  << resetCode
-                  << redCode
-                  << boldCode
-                  << gitStatus()
-                  << resetCode
-                  << " ~> ";
-        return;
+        promt += lightBlueCode 
+            + workingDirectoryFromGit() 
+            + resetCode 
+            + " on " 
+            + purpleCode 
+            + " " 
+            + currentGitBranchName() 
+            + resetCode 
+            + redCode 
+            + boldCode 
+            + gitStatus() 
+            + resetCode 
+            + " ~> ";
+
+        return promt;
+    }
+    
+    promt += lightBlueCode + workingDirectory() + resetCode + " ~> ";
+
+    return promt;
+}
+
+int calculateVisiableLength(const std::string &str)
+{
+    int length = 0;
+    bool inEscape = false;
+
+    for (std::size_t i = 0; i < str.length(); i++)
+    {
+        if (str[i] == '\033')
+        {
+            inEscape = true;
+            continue;
+        }
+
+        if (inEscape && str[i] == 'm')
+        {
+            inEscape = false;
+            continue;
+        }
+
+        if (inEscape)
+        {
+            length++;
+            continue;
+        }
     }
 
-    std::cout << "\n"
-              << lightBlueCode << workingDirectory() << resetCode << " ~> ";
+    return length;
+}
+
+
+std::string getInlinePromt()
+{
+    std::string promt;
+
+    if (isInGitRepository())
+    {
+        promt += lightBlueCode 
+            + workingDirectoryFromGit() 
+            + resetCode 
+            + " on " 
+            + purpleCode 
+            + " " 
+            + currentGitBranchName() 
+            + resetCode 
+            + redCode 
+            + boldCode 
+            + gitStatus() 
+            + resetCode 
+            + " ~> ";
+
+        return promt;
+    }
+    
+    promt += lightBlueCode + workingDirectory() + resetCode + " ~> ";
+
+    return promt;
+}
+
+void printNewLinePromt()
+{
+    std::cout << getPromt();
+    std::cout.flush();
 }
 
 void printInLinePromt()
 {
-    if (isInGitRepository())
-    {
-        std::cout << lightBlueCode
-                  << workingDirectoryFromGit()
-                  << resetCode
-                  << " on "
-                  << purpleCode
-                  << " "
-                  << currentGitBranchName()
-                  << resetCode
-                  << redCode
-                  << boldCode
-                  << gitStatus()
-                  << resetCode
-                  << " ~> ";
-        return;
-    }
-
-    std::cout << lightBlueCode << workingDirectory() << resetCode << " ~> ";
+    std::cout << getInlinePromt();
+    std::cout.flush();
 }

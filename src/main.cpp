@@ -1,22 +1,24 @@
 #include <iostream>
 #include <cstring>
 #include <unistd.h>
-#include "shell.h"
-#include "promt/promt.h"
+#include <string>
+#include "shell.hpp"
+#include "promt/promt.hpp"
 
 void shellLoop()
 {
-    char *line;
     char ***commands;
     int numCommands;
     int status;
 
     do
     {
-        printNewLinePromt();
-        
-        line = readLine();
-        commands = splitPipe(line, &numCommands);
+        std::string lineStr = readLine();
+
+        char *linePtr = new char[lineStr.size() + 1];
+        strcpy(linePtr, lineStr.c_str());
+
+        commands = splitPipe(linePtr, &numCommands);
 
         if (!commands)
         {
@@ -36,9 +38,12 @@ void shellLoop()
         {
             free(commands[i]);
         }
+
+        std::cout << "\n";
+
         free(commands);
 
-        free(line);
+        free(linePtr);
     } while (status);
 }
 

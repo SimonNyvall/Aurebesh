@@ -2,10 +2,11 @@
 #include <cstdlib>
 #include <cstring>
 #include <unistd.h>
+#include <string>
 #include <termios.h>
 #include "history/commandHistory.hpp"
-#include "shell.h"
-#include "promt/promt.h"
+#include "shell.hpp"
+#include "promt/promt.hpp"
 
 void enableRawMode(struct termios &orig_termios)
 {
@@ -107,7 +108,26 @@ char **splitLine(char *line)
     return tokens;
 }
 
-int handleEscChars(char *buffer, int *position, int *historyPosition)
+void refreshLine(const char *promt, std::string buffer, int position)
+{
+    std::cout << "\r\033[K"; // Clear the current line
+    std::cout << promt << buffer;
+    //std::cout.flush();
+
+    int visiableLength = calculateVisiableLength(promt);
+
+    int len = buffer.size();
+    
+    if (position < len)
+    {
+        for (int i = len; i > position; --i)
+        {
+            std::cout << "\b";
+        }
+    }
+}
+
+std::string handleEscChars(std::string buffer, int *position, int *historyPosition)
 {
     char seq[3];
     seq[0] = getchar();
@@ -115,14 +135,14 @@ int handleEscChars(char *buffer, int *position, int *historyPosition)
 
     if (seq[0] != '[')
     {
-        return 1;
+        return buffer;
     }
 
     if (seq[1] == 'A') // Up arrow
     {
         if (globalCommandHistory.size() == *historyPosition)
         {
-            return 0;
+            return buffer;
         }
 
         *historyPosition = *historyPosition + 1;
@@ -131,7 +151,7 @@ int handleEscChars(char *buffer, int *position, int *historyPosition)
 
         if (!lastCommand)
         {
-            return 0;
+            return buffer;
         }
 
         std::cout << "\r\033[K"; // Clear the current line
@@ -139,27 +159,22 @@ int handleEscChars(char *buffer, int *position, int *historyPosition)
 
         std::cout << lastCommand;
 
-        strncpy(buffer, lastCommand, 1024);
-        buffer[1023] = '\0';
-        *position = strlen(lastCommand);
+        buffer = lastCommand;
 
-        for (int i = 0; i < *position; i++)
-        {
-            std::cout << "\b";
-        }
+        *position = buffer.size();
 
-        return 0;
+        return buffer;
     }
 
     if (seq[1] == 'B') // Down arrow
     {
-        if (*historyPosition == 1)
+        if (*historyPosition == 1) //? This should not clear the last command but give me the buffer written before accessing the history
         {
             std::cout << "\r\033[K"; // Clear the current line
             printInLinePromt();
             *historyPosition = *historyPosition - 1;
 
-            return 0;
+            return buffer;
         }
 
         *historyPosition = *historyPosition - 1;
@@ -168,7 +183,7 @@ int handleEscChars(char *buffer, int *position, int *historyPosition)
 
         if (!lastCommand)
         {
-            return 0;
+            return buffer;
         }
 
         std::cout << "\r\033[K"; // Clear the current line
@@ -176,116 +191,95 @@ int handleEscChars(char *buffer, int *position, int *historyPosition)
 
         std::cout << lastCommand;
 
-        strncpy(buffer, lastCommand, 1024);
-        buffer[1023] = '\0';
-        *position = strlen(lastCommand);
+        buffer = lastCommand;
 
-        for (int i = 0; i < *position; i++)
-        {
-            std::cout << "\b";
-        }
+        *position = buffer.size();
 
-        return 0;
+        return buffer;
     }
 
-    if (seq[1] == 'D') // Left arrow
+    if (seq[1] == 'D') //* Left arrow
     {
-        if (*position > 0) // Ensure the cursor cannot move past the promt line
+        if (*position > 0) 
         {
-            std::cout << "\b"; // Move cursor left
+            std::cout << "\033[D"; // Move cursor left
             (*position)--;
         }
     }
 
     if (seq[1] == 'C') // Right arrow
     {
-        if (*position < strlen(buffer))
+        if (*position < buffer.size())
         {
             std::cout << buffer[*position];
             (*position)++;
         }
     }
 
-    return 1;
+    return buffer;
 }
 
-char *readLine()
+std::string readLine()
 {
-    int bufSize = 1024;
-    int position = 0;
-    char *buffer = (char *)malloc(sizeof(char) * bufSize);
+    std::string buffer; 
     int c;
     struct termios orig_termios;
+    int position = 0;
     int historyPosition = 0;
 
     enableRawMode(orig_termios);
 
-    if (!buffer)
-    {
-        std::cerr << "Allocation error" << std::endl;
-        exit(EXIT_FAILURE);
-    }
+    std::string prompt = getInlinePromt();
+    std::cout << prompt;
 
-    while (1)
+    while (true)
     {
         c = getchar();
 
         if (c == EOF || c == '\n') // Check for EOF or Enter key
         {
-            if (position == 0)
+            if (buffer.empty())
             {
-                buffer[position] = '\0';
                 std::cout << "\n";
-                return nullptr;
+                return ""; // Return an empty string instead of nullptr
             }
 
-            buffer[position] = '\0';
-            char *command = strdup(buffer);
+            char *command = strdup(buffer.c_str());
             globalCommandHistory.addCommand(command);
 
-            free(command);
+            std::cout << "\n";
+
             disableRawMode(orig_termios);
 
             historyPosition = 0;
 
-            std::cout << "\n";
-            return buffer;
+            return buffer; 
         }
         else if (c == '\033') // ESC key
         {
-            handleEscChars(buffer, &position, &historyPosition);
+            buffer = handleEscChars(buffer, &position, &historyPosition);
         }
         else if (c == 127) // Backspace key
         {
-            if (position > 0)
+            if (!buffer.empty())
             {
+                buffer.erase(position - 1, 1);
                 position--;
-                buffer[position] = '\0';
-                std::cout << "\b \b";
+
+                refreshLine(prompt.c_str(), buffer, position);
             }
         }
         else
         {
-            if (position < bufSize - 1)
-            {
-                buffer[position] = c;
-                std::cout << (char)c;
-                position++;
-            }
-        }
+            buffer.insert(position, 1, static_cast<char>(c));
+            position++;
 
-        if (position >= bufSize)
-        {
-            bufSize += 1024;
-            buffer = (char *)realloc(buffer, bufSize);
-            if (!buffer)
-            {
-                std::cerr << "Allocation error" << std::endl;
-                exit(EXIT_FAILURE);
-            }
+            refreshLine(prompt.c_str(), buffer, position); 
         }
     }
 }
+
+
 
 char ***splitPipe(char *line, int *numCommands)
 {

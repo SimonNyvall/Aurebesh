@@ -1,3 +1,5 @@
+#include <string>
+
 #ifndef SHELL_H
 #define SHELL_H
 
@@ -7,7 +9,7 @@ int shell_help(char **args);
 int shell_write(char **args);
 int shell_history(char **args);
 
-char *readLine();
+std::string readLine();
 char **splitLine(char *line);
 char ***splitPipe(char *line, int *numCommands);
 int executePipeChain(char ***commands, int numCommands);

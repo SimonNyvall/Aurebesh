@@ -2,7 +2,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
-#include "shell.h"
+#include "shell.hpp"
 #include "history/commandHistory.hpp"
 
 const char *builtIn_string[] = {
