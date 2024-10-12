@@ -10,14 +10,16 @@ const char *builtIn_string[] = {
     "exit",
     "help",
     "write",
-    "history"};
+    "history",
+    "ls"};
 
-int (*builtIn_string_func[])(char **) = {
+int (*builtIn_string_func[])(char **) = { //* Function pointers (Do not forget to add the function pointer to shell.hpp)
     &shell_cd,
     &shell_exit,
     &shell_help,
     &shell_write,
-    &shell_history};
+    &shell_history,
+    &shell_ls};
 
 int shell_num_builtins()
 {
@@ -84,6 +86,38 @@ int shell_history(char **args)
     {
         globalCommandHistory.printHistory();
     }
+
+    return 1;
+}
+
+int shell_ls(char **args)
+{
+    std::string command = "ls --color=always -C";
+
+    for (int i = 1; args[i] != nullptr; i++) 
+    {
+        command += " ";
+        command += args[i];
+    }
+
+    FILE *file = popen(command.c_str(), "r");
+    if (file == nullptr)
+    {
+        std::cerr << "Failed to run command" << std::endl;
+        return 1;
+    }
+
+    char buffer[128];
+    std::string result = "";
+
+    while (fgets(buffer, sizeof(buffer), file) != nullptr)
+    {
+        result += buffer;
+    }
+
+    pclose(file);
+
+    std::cout << result;
 
     return 1;
 }
