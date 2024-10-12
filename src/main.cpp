@@ -15,6 +15,11 @@ void shellLoop()
     {
         std::string lineStr = readLine();
 
+        if (lineStr.empty())
+        {
+            continue;
+        }
+
         char *linePtr = new char[lineStr.size() + 1];
         strcpy(linePtr, lineStr.c_str());
 

@@ -1,27 +1,63 @@
 # MudShell
 
-## Project Overview
-**MudShell** is a custom-built shell written in C++ that aims to replicate the functionality of a Unix-like command-line interface. It provides a simplified command execution environment where users can run both built-in and external commands, manage input/output through piping, and handle directories using commands like `cd`. MudShell was created as a learning project to understand and implement core shell functionalities from the ground up, with plans for future enhancements.
+MudShell is a modern, user-friendly command line shell for **Linux** systems. Inspired by Unix-like shells and the F# programming language. MudShell brings powerful features like command history, piping (forward and backward), **Git** integration into the prompt, fast **cd** command (similar to **zoxide**) and more.
+
+## Quick Start
+MudShell funxtions similarly to other popular shells like Bash and Zsh. Key differences include its interative prompt.
+
+To get started, tun the following commands to build and install MudShell;
+```bash
+make
+```
+
+To run MudShell, simply run the following command;
+```bash
+./mudshell
+```
+
+To clean the build artifacts:
+```bash
+make clean
+```
 
 ## Features
-* **Built-In Commands**
-    * `cd` - Change directory
-    * `exit` - Exit the shell
-    * `help` - Display help information
-* **External Commands**
-    * Execute any valid system command (e.g., `ls`, `grep`, `cat`) by forking child processes and using `execvp`
-* **Piping**
-    * Connect multiple commands together using pipes (e.g., `ls |> grep .cpp`)
-* **Interactive Prompt**
-    * Displays the current working directory.
+Built-in Commands
 
-## Planned Features
-Future updates to **MudShell** will include several powerful features that are often found in modern shells:
+MudShell comes with several built-in commands, including:
 
-* Command History with Up/Down Arrow Keys: Allow users to navigate through previously executed commands using arrow keys.
-* Tab Completion: Enable auto-completion of commands and file paths with the Tab key, ignoring case sensitivity.
-* Advanced Piping: Extend piping functionality to include more complex scenarios, like output redirection and background jobs.
-* Back-Piping: Implement back-piping, where the output of one command can be passed back to a previous command.
-* Fast Directory Switching (z-like behavior): Implement a smart directory-switching feature similar to z, which allows quick access to frequently visited directories.
-* Alias Support: Allow users to define shortcuts for long commands (e.g., aliasing ll to ls -la).
-* Arrow Keys for Cursor Movement: Enhance the input field to support left/right arrow keys for editing commands, as well as Home and End key support.
+* `cd`: Change directory.
+* `exit`: Exit the shell.
+* `help`: Display help information about available commands.
+
+## External Commands
+
+MudShell fully supports external system commands. For example, you can run commands like ls, grep, and cat using child processes with execvp.
+Piping
+
+MudShell allows you to connect multiple commands using pipes, passing the output of one command to the next (e.g., ls |> grep .cpp).
+Command History
+
+Navigate through your command history with the Up/Down arrow keys. This makes it easier to rerun or modify previous commands.
+Interactive Prompt
+
+MudShell's prompt is customizable and displays the current working directory. It also integrates with Git, similar to the Starship prompt, to show repository status.
+Input Support
+
+MudShell supports left/right arrow keys for cursor movement, as well as Home/End keys for quick navigation. You can edit commands directly within the input line.
+Planned Features
+
+MudShell is continuously evolving. Planned features for future releases include:
+
+* `Tab Completion`: Autocomplete commands and file paths with the Tab key.
+* `Back Piping`: Pass command output back to previous commands.
+* `Fast Directory Switching`: Introduce smart directory-switching similar to the zoxide tool for quickly accessing frequently visited directories.
+* `Alias Support`: Allow users to create shortcuts for commonly used commands (e.g., alias ll for ls -la).
+* `Advanced Piping and Redirection`: Support more complex piping and redirection scenarios, such as output redirection (>), appending (>>), and background jobs (&).
+
+## Dependencies
+
+Running MudShell requires:
+
+* Basic POSIX utilities such as cat, cut, ls, rm, and mkdir.
+* Ncurses: Provides terminal handling functionalities (usually pre-installed on most Linux distributions). 
+* Git: Required for Git integration in the prompt.

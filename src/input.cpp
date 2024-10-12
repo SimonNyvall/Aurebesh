@@ -236,30 +236,29 @@ std::string readLine()
     {
         c = getchar();
 
-        if (c == EOF || c == '\n') // Check for EOF or Enter key
+        if (c == EOF || c == '\n') //* Check for EOF or Enter key
         {
+            std::cout << "\n";
+
+            disableRawMode(orig_termios);
+
             if (buffer.empty())
             {
-                std::cout << "\n";
-                return ""; // Return an empty string instead of nullptr
+                return std::string();
             }
 
             char *command = strdup(buffer.c_str());
             globalCommandHistory.addCommand(command);
 
-            std::cout << "\n";
-
-            disableRawMode(orig_termios);
-
             historyPosition = 0;
 
             return buffer; 
         }
-        else if (c == '\033') // ESC key
+        else if (c == '\033') //* ESC key
         {
             buffer = handleEscChars(buffer, &position, &historyPosition);
         }
-        else if (c == 127) // Backspace key
+        else if (c == 127) //* Backspace key
         {
             if (!buffer.empty())
             {
