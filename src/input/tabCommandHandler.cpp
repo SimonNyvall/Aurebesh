@@ -6,10 +6,22 @@
 #include <unistd.h>
 #include <iomanip>
 #include <algorithm>
+#include <cctype>
 
 bool isExecutable(const std::filesystem::path &path)
 {
     return std::filesystem::is_regular_file(path) && access(path.c_str(), X_OK) == 0;
+}
+
+std::string toLower(const std::string &str)
+{
+    std::string lowerStr = str;
+
+    std::transform(lowerStr.begin(), lowerStr.end(), lowerStr.begin(),
+                   [](unsigned char c)
+                   { return std::tolower(c); });
+
+    return lowerStr;
 }
 
 std::vector<std::string> getPATHCommands()
@@ -62,38 +74,29 @@ std::vector<std::string> getCommandsFromPath(std::string path)
 {
     std::vector<std::string> commands;
 
-    // Debug print: original path
-
-    // Resolve the path to the filesystem
     std::filesystem::path fsPath(path);
 
-    // If the path is relative, resolve it to an absolute path
     if (fsPath.is_relative())
     {
         fsPath = std::filesystem::absolute(fsPath);
-        // Debug print: resolved absolute path
     }
 
-    // Check if the path is a directory
     if (!std::filesystem::is_directory(fsPath))
     {
-        return commands; // Return an empty vector if it's not a directory
+        return commands;
     }
 
     try
     {
-        // Debug print: iterating over directory
-        // Use std::filesystem to iterate over the specified directory
         for (const auto &entry : std::filesystem::directory_iterator(fsPath))
         {
-            // Add both directories and executables to the list
             if (std::filesystem::is_directory(entry.path()))
             {
-                commands.push_back(entry.path().filename().string() + "/"); // Add a '/' to indicate a directory
+                commands.push_back(entry.path().filename().string() + "/");
             }
-            else if (isExecutable(entry.path())) // Check if the entry is an executable
+            else if (isExecutable(entry.path()))
             {
-                commands.push_back(entry.path().filename().string()); // Store the executable's name
+                commands.push_back(entry.path().filename().string());
             }
         }
     }
@@ -111,10 +114,33 @@ std::vector<std::string> tabCommandHandler(std::string buffer)
 
     if (buffer.find('/') != std::string::npos || buffer.find("..") != std::string::npos || buffer.find('.') != std::string::npos)
     {
-        std::filesystem::path currentDir = std::filesystem::current_path();
-        std::filesystem::path fullPath = currentDir / buffer;
+        std::filesystem::path currentPath = std::filesystem::current_path();
+        std::filesystem::path fullPath = currentPath / buffer;
 
-        commands = getCommandsFromPath(fullPath.string());
+        commands = getCommandsFromPath(fullPath.parent_path().string());
+
+        std::string currentCommand = fullPath.filename().string();
+        std::string currentCommandLower = toLower(currentCommand);
+        std::vector<std::string> matchingCommands;
+
+        for (const auto &command : commands)
+        {
+            std::string commandPart = command;
+            std::string commandPartLower = toLower(commandPart);
+
+            if (commandPartLower.rfind(currentCommandLower, 0) == 0)
+            {
+                std::size_t lastSlashPos = buffer.find_last_of('/');
+                std::string basePath = (lastSlashPos != std::string::npos) ? buffer.substr(0, lastSlashPos + 1) : buffer;
+
+                matchingCommands.push_back(basePath + commandPart);
+            }
+        }
+
+        if (!matchingCommands.empty())
+        {
+            return matchingCommands;
+        }
     }
     else
     {
@@ -126,21 +152,16 @@ std::vector<std::string> tabCommandHandler(std::string buffer)
         return std::vector<std::string>();
     }
 
-    std::string currentCommand = buffer.substr(buffer.find_last_of('/') + 1); //! Something here
-    std::cout << "Current command: " << currentCommand << std::endl;
-
     std::vector<std::string> matchingCommands;
+    std::string bufferLower = toLower(buffer);
 
     for (const auto &command : commands)
     {
+        std::string commandLower = command;
 
-        std::cout << command << std::endl;
-        if (command.rfind(currentCommand, 0) == 0)
+        if (commandLower.rfind(bufferLower, 0) == 0)
         {
-            // buffer = command + " ";
-            // break;
-
-            matchingCommands.push_back(command);
+            matchingCommands.push_back(command + " ");
         }
     }
 
@@ -188,13 +209,30 @@ void printCommands(const std::vector<std::string> &commands)
     bool isNewLine = false;
     for (const auto &command : commands)
     {
+        std::string toPrint = command;
+
+        std::size_t lastSlashPos = command.find_last_of('/');
+        if (lastSlashPos != std::string::npos)
+        {
+            if (lastSlashPos == command.length() - 1)
+            {
+                lastSlashPos = command.find_last_of('/', lastSlashPos - 1);
+            }
+
+            toPrint = command.substr(lastSlashPos + 1);
+        }
+        else
+        {
+            std::cerr << "Error: No '/' found in command " << command << '\n';
+        }
+
         if (isNewLine)
         {
             std::cout << '\n';
             isNewLine = false;
         }
 
-        std::cout << std::setw(COLUMN_WIDTH) << std::left << command;
+        std::cout << std::setw(COLUMN_WIDTH) << std::left << toPrint;
 
         count++;
         if (count % COMMANDS_PER_LINE == 0)

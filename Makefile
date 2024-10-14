@@ -8,9 +8,10 @@ TARGET = mudshell
 SRCS = src/main.cpp \
        src/builtin.cpp \
        src/execution.cpp \
-       src/input.cpp \
        src/history/commandHistory.cpp \
 	   src/promt/promt.cpp \
+	   src/input/input.cpp \
+	   src/input/tabCommandHandler.cpp
 
 # Object files
 OBJS = $(SRCS:.cpp=.o)

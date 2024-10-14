@@ -4,9 +4,10 @@
 #include <unistd.h>
 #include <string>
 #include <termios.h>
-#include "history/commandHistory.hpp"
-#include "shell.hpp"
-#include "promt/promt.hpp"
+#include "input.hpp"
+#include "../history/commandHistory.hpp"
+#include "../shell.hpp"
+#include "../promt/promt.hpp"
 
 void enableRawMode(struct termios &orig_termios)
 {
@@ -112,12 +113,12 @@ void refreshLine(const char *promt, std::string buffer, int position)
 {
     std::cout << "\r\033[K"; // Clear the current line
     std::cout << promt << buffer;
-    //std::cout.flush();
+    // std::cout.flush();
 
     int visiableLength = calculateVisiableLength(promt);
 
     int len = buffer.size();
-    
+
     if (position < len)
     {
         for (int i = len; i > position; --i)
@@ -200,7 +201,7 @@ std::string handleEscChars(std::string buffer, int *position, int *historyPositi
 
     if (seq[1] == 'D') //* Left arrow
     {
-        if (*position > 0) 
+        if (*position > 0)
         {
             std::cout << "\033[D"; // Move cursor left
             (*position)--;
@@ -221,7 +222,7 @@ std::string handleEscChars(std::string buffer, int *position, int *historyPositi
 
 std::string readLine()
 {
-    std::string buffer; 
+    std::string buffer;
     int c;
     struct termios orig_termios;
     int position = 0;
@@ -238,7 +239,12 @@ std::string readLine()
 
         if (c == EOF || c == '\n') //* Check for EOF or Enter key
         {
-            std::cout << "\n";
+            if (buffer.size() == 0)
+            {
+                std::cout << '\n';
+            }
+
+            std::cout << '\n';
 
             disableRawMode(orig_termios);
 
@@ -252,7 +258,7 @@ std::string readLine()
 
             historyPosition = 0;
 
-            return buffer; 
+            return buffer;
         }
         else if (c == '\033') //* ESC key
         {
@@ -260,7 +266,7 @@ std::string readLine()
         }
         else if (c == 127) //* Backspace key
         {
-            if (!buffer.empty())
+            if (!buffer.empty() && position > 0)
             {
                 buffer.erase(position - 1, 1);
                 position--;
@@ -268,17 +274,39 @@ std::string readLine()
                 refreshLine(prompt.c_str(), buffer, position);
             }
         }
+        else if (c == 9) //* Tab key
+        {
+            if (false) //! Check if the buffer contains the cd command
+            {
+            }
+            else //? If not, then search for the command in the PATH
+            {
+                std::vector<std::string> commands = tabCommandHandler(buffer);
+
+                if (commands.size() == 1)
+                {
+                    buffer = commands[0];
+                    position = buffer.size();
+
+                    refreshLine(prompt.c_str(), buffer, position);
+                }
+                else
+                {
+                    printCommands(commands);
+
+                    std::cout << prompt << buffer;
+                }
+            }
+        }
         else
         {
             buffer.insert(position, 1, static_cast<char>(c));
             position++;
 
-            refreshLine(prompt.c_str(), buffer, position); 
+            refreshLine(prompt.c_str(), buffer, position);
         }
     }
 }
-
-
 
 char ***splitPipe(char *line, int *numCommands)
 {

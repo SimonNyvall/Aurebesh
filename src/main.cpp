@@ -4,6 +4,7 @@
 #include <string>
 #include "shell.hpp"
 #include "promt/promt.hpp"
+#include "input/input.hpp"
 
 void shellLoop()
 {

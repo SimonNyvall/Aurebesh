@@ -1,5 +1,3 @@
-#include <string>
-
 #ifndef SHELL_H
 #define SHELL_H
 
@@ -12,9 +10,6 @@ int shell_history(char **args);
 int shell_ls(char **args);
 
 // Header functions
-std::string readLine();
-char **splitLine(char *line);
-char ***splitPipe(char *line, int *numCommands);
 int executePipeChain(char ***commands, int numCommands);
 int shellLaunch(char **args);
 int execute(char **args);
