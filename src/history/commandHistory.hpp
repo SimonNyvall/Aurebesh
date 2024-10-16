@@ -5,19 +5,19 @@
 #include <cstring>
 #include <string>
 
-class CommandHistory 
+class CommandHistory
 {
-    private:
-        std::deque<std::string> history;
-        int maxSize;
+private:
+    std::deque<std::string> history;
+    int maxSize;
 
-    public:
-        CommandHistory(int maxSize);
-        char **copyCommand(char **command);
-        void addCommand(const char *command);
-        const char *getCommand(int position);
-        void printHistory();
-        int size();
+public:
+    CommandHistory(int maxSize);
+    char **copyCommand(char **command);
+    void addCommand(const char *command);
+    const char *getCommand(int position);
+    void printHistory();
+    int size();
 };
 
 extern CommandHistory globalCommandHistory;

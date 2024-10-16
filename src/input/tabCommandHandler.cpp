@@ -207,10 +207,6 @@ void printCommands(const std::vector<std::string> &commands)
 
             toPrint = command.substr(lastSlashPos + 1);
         }
-        else
-        {
-            std::cerr << "Error: No '/' found in command " << command << '\n';
-        }
 
         if (isNewLine)
         {

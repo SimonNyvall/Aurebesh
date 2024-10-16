@@ -1,12 +1,21 @@
 #include <string>
 
-#ifndef PROMT_H
-#define PROMT_H
+#ifndef PROMPT_H
+#define PROMPT_H
 
-void printInLinePrompt();
-void printNewLinePrompt();
-std::string getInlinePrompt();
-std::string getPrompt();
-int calculateVisiableLength(const std::string &str);
+class Prompt
+{
+public:
+    std::string getPrompt();
+    int length();
+    void printPrompt();
+    void updatePrompt();
+    static Prompt &getInstance();
+
+private:
+    std::string promptText;
+    static Prompt* promptInstance;
+    Prompt();
+};
 
 #endif

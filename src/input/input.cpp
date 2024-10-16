@@ -114,7 +114,8 @@ void refreshLine(const char *promt, std::string buffer, int position)
     std::cout << "\r\033[K"; // Clear the current line
     std::cout << promt << buffer;
 
-    int visiableLength = calculateVisiableLength(promt);
+    Prompt &prompt = Prompt::getInstance();
+    int visiableLength = prompt.length();
 
     int len = buffer.size();
 
@@ -132,6 +133,8 @@ std::string handleEscChars(std::string buffer, int *position, int *historyPositi
     char seq[3];
     seq[0] = getchar();
     seq[1] = getchar();
+
+    Prompt &prompt = Prompt::getInstance();
 
     if (seq[0] != '[')
     {
@@ -155,7 +158,7 @@ std::string handleEscChars(std::string buffer, int *position, int *historyPositi
         }
 
         std::cout << "\r\033[K"; // Clear the current line
-        printInLinePrompt();
+        prompt.printPrompt();
 
         std::cout << lastCommand;
 
@@ -171,7 +174,7 @@ std::string handleEscChars(std::string buffer, int *position, int *historyPositi
         if (*historyPosition == 1) //? This should not clear the last command but give me the buffer written before accessing the history
         {
             std::cout << "\r\033[K"; // Clear the current line
-            printInLinePrompt();
+            prompt.printPrompt();
             *historyPosition = *historyPosition - 1;
 
             return buffer;
@@ -187,7 +190,7 @@ std::string handleEscChars(std::string buffer, int *position, int *historyPositi
         }
 
         std::cout << "\r\033[K"; // Clear the current line
-        printInLinePrompt();
+        prompt.printPrompt();
 
         std::cout << lastCommand;
 
@@ -225,7 +228,7 @@ std::string handleEscChars(std::string buffer, int *position, int *historyPositi
             *position = 0;
 
             std::cout << "\r\033[K"; // Clear the current line
-            printInLinePrompt();
+            prompt.printPrompt();
             std::cout << buffer;
 
             for (int i = 0; i < buffer.size(); i++)
@@ -244,7 +247,7 @@ std::string handleEscChars(std::string buffer, int *position, int *historyPositi
             *position = buffer.size();
 
             std::cout << "\r\033[K"; // Clear the current line
-            printInLinePrompt();
+            prompt.printPrompt();
             std::cout << buffer;
         }
     }
@@ -262,7 +265,9 @@ std::string readLine()
 
     enableRawMode(orig_termios);
 
-    std::string prompt = getInlinePrompt();
+    Prompt &promptInstance = Prompt::getInstance();
+
+    std::string prompt = promptInstance.getPrompt();
     std::cout << prompt;
 
     while (true)
@@ -289,6 +294,8 @@ std::string readLine()
             globalCommandHistory.addCommand(command);
 
             historyPosition = 0;
+
+            promptInstance.updatePrompt();
 
             return buffer;
         }

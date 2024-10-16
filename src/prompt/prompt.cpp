@@ -6,12 +6,13 @@
 #include <cstdio>
 #include <sys/stat.h>
 #include <vector>
+#include "prompt.hpp"
 
-const std::string resetCode = "\033[0m";
-const std::string lightBlueCode = "\033[1;34m";
-const std::string redCode = "\033[0;31m";
-const std::string purpleCode = "\033[0;35m";
-const std::string boldCode = "\033[1m";
+const std::string RESET_CODE = "\033[0m";
+const std::string LIGHT_BLUE_COLOR_CODE = "\033[1;34m";
+const std::string RED_COLOR_CODE = "\033[0;31m";
+const std::string PURPLE_COLOR_CODE = "\033[0;35m";
+const std::string BOLD_CODE = "\033[1m";
 
 bool isInGitRepository()
 {
@@ -261,7 +262,7 @@ std::string gitStatus()
 
     std::string result;
 
-    for (const auto& s : status)
+    for (const auto &s : status)
     {
         result += s;
     }
@@ -269,53 +270,55 @@ std::string gitStatus()
     return " [" + result + "]";
 }
 
-std::string getPrompt()
+Prompt* Prompt::promptInstance = nullptr;
+
+std::string getInlinePrompt()
 {
-    std::string promt;
+    std::string prompt;
 
     if (isInGitRepository())
     {
-        promt += lightBlueCode 
-            + workingDirectoryFromGit() 
-            + resetCode 
-            + " on " 
-            + purpleCode 
-            + currentGitBranchName() 
-            + resetCode 
-            + redCode 
-            + boldCode 
-            + gitStatus() 
-            + resetCode 
-            + " >_ ";
+        prompt += LIGHT_BLUE_COLOR_CODE + workingDirectoryFromGit() + RESET_CODE + " on " + PURPLE_COLOR_CODE + currentGitBranchName() + RESET_CODE + RED_COLOR_CODE + BOLD_CODE + gitStatus() + RESET_CODE + " >_ ";
 
-        return promt;
+        return prompt;
     }
-    
-    promt += lightBlueCode + workingDirectory() + resetCode + " >_ ";
 
-    return promt;
+    prompt += LIGHT_BLUE_COLOR_CODE + workingDirectory() + RESET_CODE + " >_ ";
+
+    return prompt;
 }
 
-int calculateVisiableLength(const std::string &str)
+void printInLinePrompt()
+{
+    std::cout << getInlinePrompt();
+    std::cout.flush();
+}
+
+std::string Prompt::getPrompt()
+{
+    return promptText;
+}
+
+int Prompt::length()
 {
     int length = 0;
-    bool inEscape = false;
+    bool isEscape = false;
 
-    for (std::size_t i = 0; i < str.length(); i++)
+    for (std::size_t i = 0; i < promptText.length(); i++)
     {
-        if (str[i] == '\033')
+        if (promptText[i] == '\033')
         {
-            inEscape = true;
+            isEscape = true;
             continue;
         }
 
-        if (inEscape && str[i] == 'm')
+        if (isEscape && promptText[i] == 'm')
         {
-            inEscape = false;
+            isEscape = false;
             continue;
         }
 
-        if (inEscape)
+        if (isEscape)
         {
             length++;
             continue;
@@ -325,42 +328,35 @@ int calculateVisiableLength(const std::string &str)
     return length;
 }
 
-
-std::string getInlinePrompt()
+void Prompt::printPrompt()
 {
-    std::string prompt;
+    std::cout << promptText;
+    std::cout.flush();
+}
 
+void Prompt::updatePrompt()
+{
     if (isInGitRepository())
     {
-        prompt += lightBlueCode 
-            + workingDirectoryFromGit() 
-            + resetCode 
-            + " on " 
-            + purpleCode 
-            + currentGitBranchName() 
-            + resetCode 
-            + redCode 
-            + boldCode 
-            + gitStatus() 
-            + resetCode 
-            + " >_ ";
-
-        return prompt;
+        promptText = LIGHT_BLUE_COLOR_CODE + workingDirectoryFromGit() + RESET_CODE + " on " + PURPLE_COLOR_CODE + currentGitBranchName() + RESET_CODE + RED_COLOR_CODE + BOLD_CODE + gitStatus() + RESET_CODE + " >_ ";
     }
-    
-    prompt += lightBlueCode + workingDirectory() + resetCode + " >_ ";
-
-    return prompt;
+    else
+    {
+        promptText = LIGHT_BLUE_COLOR_CODE + workingDirectory() + RESET_CODE + " >_ ";
+    }
 }
 
-void printNewLinePrompt()
+Prompt &Prompt::getInstance()
 {
-    std::cout << getPrompt();
-    std::cout.flush();
+    if (!promptInstance)
+    {
+        promptInstance = new Prompt();
+    }
+
+    return *promptInstance;
 }
 
-void printInLinePrompt()
+Prompt::Prompt()
 {
-    std::cout << getInlinePrompt();
-    std::cout.flush();
+    updatePrompt();
 }
