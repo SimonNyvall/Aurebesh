@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <algorithm>
 #include <cctype>
+#include <regex>
 #include "input.hpp"
 
 std::vector<std::string> getPATHCommands()
@@ -79,7 +80,7 @@ std::vector<std::string> getCommandsFromPath(std::string path)
             {
                 commands.push_back(entry.path().filename().string() + "/");
             }
-            else if (isExecutable(entry.path()))
+            else
             {
                 commands.push_back(entry.path().filename().string());
             }
@@ -97,11 +98,15 @@ std::vector<std::string> tabCommandHandler(std::string buffer)
 {
     std::vector<std::string> commands;
 
-    //? This if should be captured by regex maybe. Due to the fact that the buffer can conatin the path not in the beginning
-    if (buffer.find('/') != std::string::npos || buffer.find("..") != std::string::npos || buffer.find('.') != std::string::npos)
+    std::regex pathRegex(R"(\.\.\/[^ ]+|\.\.\/|\.\/[^ ]+|\.\/)"); //! This does not match the '-' character
+    std::smatch match;
+
+    if (std::regex_search(buffer, match, pathRegex))
     {
+        std::string pathPart = match.str(0);
+
         std::filesystem::path currentPath = std::filesystem::current_path();
-        std::filesystem::path fullPath = currentPath / buffer;
+        std::filesystem::path fullPath = currentPath / pathPart;
 
         commands = getCommandsFromPath(fullPath.parent_path().string());
 
@@ -113,7 +118,7 @@ std::vector<std::string> tabCommandHandler(std::string buffer)
         {
             std::string commandPart = command;
             std::string commandPartLower = toLower(commandPart);
-
+            
             if (commandPartLower.rfind(currentCommandLower, 0) == 0)
             {
                 std::size_t lastSlashPos = buffer.find_last_of('/');
