@@ -28,6 +28,7 @@ void printCdPaths(const std::vector<std::string> &paths);
 
 bool isExecutable(const std::filesystem::path &path);
 std::string toLower(const std::string &str);
+std::string findComonPrefix(const std::vector<std::string>& strings);
 
 
 std::string readLine();

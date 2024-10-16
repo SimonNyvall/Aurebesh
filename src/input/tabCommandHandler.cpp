@@ -130,6 +130,18 @@ std::vector<std::string> tabCommandHandler(std::string buffer)
 
         if (!matchingCommands.empty())
         {
+            std::string commonPrefix = findComonPrefix(matchingCommands);
+
+            if (buffer == commonPrefix)
+            {
+                printCommands(matchingCommands);
+            }
+
+            if (!commonPrefix.empty())
+            {
+                return {commonPrefix};
+            }
+
             return matchingCommands;
         }
     }
