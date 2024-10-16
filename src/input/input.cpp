@@ -113,7 +113,6 @@ void refreshLine(const char *promt, std::string buffer, int position)
 {
     std::cout << "\r\033[K"; // Clear the current line
     std::cout << promt << buffer;
-    // std::cout.flush();
 
     int visiableLength = calculateVisiableLength(promt);
 
@@ -214,6 +213,39 @@ std::string handleEscChars(std::string buffer, int *position, int *historyPositi
         {
             std::cout << buffer[*position];
             (*position)++;
+        }
+    }
+
+    if (seq[1] == '1') //* Home key
+    {
+        char t = getchar();
+
+        if (t == '~')
+        {
+            *position = 0;
+
+            std::cout << "\r\033[K"; // Clear the current line
+            printInLinePrompt();
+            std::cout << buffer;
+
+            for (int i = 0; i < buffer.size(); i++)
+            {
+                std::cout << '\b';
+            }
+        }
+    }
+
+    if (seq[1] == '4') //* End key
+    {
+        char t = getchar();
+
+        if (t == '~')
+        {
+            *position = buffer.size();
+
+            std::cout << "\r\033[K"; // Clear the current line
+            printInLinePrompt();
+            std::cout << buffer;
         }
     }
 

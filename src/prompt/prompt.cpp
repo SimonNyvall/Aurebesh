@@ -175,9 +175,9 @@ bool hasGitUntrackedChanges()
     return !result.empty() && result.find("??") != std::string::npos;
 }
 
-bool hasGitStagedChanges() // TODO: This is not working properly
+bool hasGitStagedChanges()
 {
-    FILE *file = popen("git status -sb 2>/dev/null", "r");
+    FILE *file = popen("git diff --cached --name-status 2>/dev/null", "r");
     char buffer[128];
     std::string result;
 
