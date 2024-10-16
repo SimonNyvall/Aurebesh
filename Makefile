@@ -9,9 +9,11 @@ SRCS = src/main.cpp \
        src/builtin.cpp \
        src/execution.cpp \
        src/history/commandHistory.cpp \
-	   src/promt/promt.cpp \
+	   src/prompt/prompt.cpp \
 	   src/input/input.cpp \
-	   src/input/tabCommandHandler.cpp
+	   src/input/tabCommandHandler.cpp \
+	   src/input/tabCdHandler.cpp \
+	   src/input/pathHelper.cpp
 
 # Object files
 OBJS = $(SRCS:.cpp=.o)

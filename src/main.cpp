@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <string>
 #include "shell.hpp"
-#include "promt/promt.hpp"
+#include "prompt/prompt.hpp"
 #include "input/input.hpp"
 
 void shellLoop()

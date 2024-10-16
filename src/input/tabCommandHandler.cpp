@@ -7,22 +7,7 @@
 #include <iomanip>
 #include <algorithm>
 #include <cctype>
-
-bool isExecutable(const std::filesystem::path &path)
-{
-    return std::filesystem::is_regular_file(path) && access(path.c_str(), X_OK) == 0;
-}
-
-std::string toLower(const std::string &str)
-{
-    std::string lowerStr = str;
-
-    std::transform(lowerStr.begin(), lowerStr.end(), lowerStr.begin(),
-                   [](unsigned char c)
-                   { return std::tolower(c); });
-
-    return lowerStr;
-}
+#include "input.hpp"
 
 std::vector<std::string> getPATHCommands()
 {
@@ -112,6 +97,7 @@ std::vector<std::string> tabCommandHandler(std::string buffer)
 {
     std::vector<std::string> commands;
 
+    //? This if should be captured by regex maybe. Due to the fact that the buffer can conatin the path not in the beginning
     if (buffer.find('/') != std::string::npos || buffer.find("..") != std::string::npos || buffer.find('.') != std::string::npos)
     {
         std::filesystem::path currentPath = std::filesystem::current_path();

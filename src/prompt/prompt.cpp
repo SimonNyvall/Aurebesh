@@ -241,7 +241,7 @@ std::string gitStatus()
 
     if (hasGitDeletedLines())
     {
-        status.push_back("✘");
+        status.push_back("x");
     }
 
     if (isGitAhead())
@@ -269,7 +269,7 @@ std::string gitStatus()
     return " [" + result + "]";
 }
 
-std::string getPromt()
+std::string getPrompt()
 {
     std::string promt;
 
@@ -280,19 +280,18 @@ std::string getPromt()
             + resetCode 
             + " on " 
             + purpleCode 
-            + " " 
             + currentGitBranchName() 
             + resetCode 
             + redCode 
             + boldCode 
             + gitStatus() 
             + resetCode 
-            + " ~> ";
+            + " >_ ";
 
         return promt;
     }
     
-    promt += lightBlueCode + workingDirectory() + resetCode + " ~> ";
+    promt += lightBlueCode + workingDirectory() + resetCode + " >_ ";
 
     return promt;
 }
@@ -327,42 +326,41 @@ int calculateVisiableLength(const std::string &str)
 }
 
 
-std::string getInlinePromt()
+std::string getInlinePrompt()
 {
-    std::string promt;
+    std::string prompt;
 
     if (isInGitRepository())
     {
-        promt += lightBlueCode 
+        prompt += lightBlueCode 
             + workingDirectoryFromGit() 
             + resetCode 
             + " on " 
             + purpleCode 
-            + " " 
             + currentGitBranchName() 
             + resetCode 
             + redCode 
             + boldCode 
             + gitStatus() 
             + resetCode 
-            + " ~> ";
+            + " >_ ";
 
-        return promt;
+        return prompt;
     }
     
-    promt += lightBlueCode + workingDirectory() + resetCode + " ~> ";
+    prompt += lightBlueCode + workingDirectory() + resetCode + " >_ ";
 
-    return promt;
+    return prompt;
 }
 
-void printNewLinePromt()
+void printNewLinePrompt()
 {
-    std::cout << getPromt();
+    std::cout << getPrompt();
     std::cout.flush();
 }
 
-void printInLinePromt()
+void printInLinePrompt()
 {
-    std::cout << getInlinePromt();
+    std::cout << getInlinePrompt();
     std::cout.flush();
 }

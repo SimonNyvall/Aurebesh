@@ -7,7 +7,7 @@
 #include "input.hpp"
 #include "../history/commandHistory.hpp"
 #include "../shell.hpp"
-#include "../promt/promt.hpp"
+#include "../prompt/prompt.hpp"
 
 void enableRawMode(struct termios &orig_termios)
 {
@@ -156,7 +156,7 @@ std::string handleEscChars(std::string buffer, int *position, int *historyPositi
         }
 
         std::cout << "\r\033[K"; // Clear the current line
-        printInLinePromt();
+        printInLinePrompt();
 
         std::cout << lastCommand;
 
@@ -172,7 +172,7 @@ std::string handleEscChars(std::string buffer, int *position, int *historyPositi
         if (*historyPosition == 1) //? This should not clear the last command but give me the buffer written before accessing the history
         {
             std::cout << "\r\033[K"; // Clear the current line
-            printInLinePromt();
+            printInLinePrompt();
             *historyPosition = *historyPosition - 1;
 
             return buffer;
@@ -188,7 +188,7 @@ std::string handleEscChars(std::string buffer, int *position, int *historyPositi
         }
 
         std::cout << "\r\033[K"; // Clear the current line
-        printInLinePromt();
+        printInLinePrompt();
 
         std::cout << lastCommand;
 
@@ -230,7 +230,7 @@ std::string readLine()
 
     enableRawMode(orig_termios);
 
-    std::string prompt = getInlinePromt();
+    std::string prompt = getInlinePrompt();
     std::cout << prompt;
 
     while (true)
@@ -276,10 +276,25 @@ std::string readLine()
         }
         else if (c == 9) //* Tab key
         {
-            if (false) //! Check if the buffer contains the cd command
+            if (buffer.find("cd ") == 0)
             {
+                std::vector<std::string> paths = tabCdHandler(buffer);
+
+                if (paths.size() == 1)
+                {
+                    buffer = paths[0];
+                    position = buffer.size();
+
+                    refreshLine(prompt.c_str(), buffer, position);
+                }
+                else
+                {
+                    printCdPaths(paths);
+
+                    std::cout << prompt << buffer;
+                }
             }
-            else //? If not, then search for the command in the PATH
+            else
             {
                 std::vector<std::string> commands = tabCommandHandler(buffer);
 

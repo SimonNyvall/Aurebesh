@@ -3,10 +3,10 @@
 #ifndef PROMT_H
 #define PROMT_H
 
-void printInLinePromt();
-void printNewLinePromt();
-std::string getInlinePromt();
-std::string getPromt();
+void printInLinePrompt();
+void printNewLinePrompt();
+std::string getInlinePrompt();
+std::string getPrompt();
 int calculateVisiableLength(const std::string &str);
 
 #endif
