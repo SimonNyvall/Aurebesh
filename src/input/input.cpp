@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <string>
 #include <termios.h>
+#include <regex>
 #include "input.hpp"
 #include "../history/commandHistory.hpp"
 #include "../shell.hpp"
@@ -295,8 +296,6 @@ std::string readLine()
 
             historyPosition = 0;
 
-            promptInstance.updatePrompt();
-
             return buffer;
         }
         else if (c == '\033') //* ESC key
@@ -315,8 +314,14 @@ std::string readLine()
         }
         else if (c == 9) //* Tab key
         {
-            if (buffer.find("cd ") == 0)
+            std::regex cdRegex(R"((^|[^a-zA-Z0-9])cd\s)");
+
+            if (std::regex_match(buffer, cdRegex))
             {
+                std::cout << '\n' << "[DEBUG] it worked" << '\n';
+                int cdPos = buffer.find("cd ");
+                std::string bufferCopy = buffer.substr(cdPos + buffer.size() - cdPos);
+                std::cout << "[DEBUG] bufferCopy: " << bufferCopy << "END" << '\n';
                 std::vector<std::string> paths = tabCdHandler(buffer);
 
                 if (paths.size() == 1)

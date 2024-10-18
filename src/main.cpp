@@ -11,6 +11,7 @@ void shellLoop()
     char ***commands;
     int numCommands;
     int status;
+    Prompt &prompt = Prompt::getInstance();
 
     do
     {
@@ -44,6 +45,8 @@ void shellLoop()
         {
             free(commands[i]);
         }
+
+        prompt.updatePrompt();
 
         std::cout << "\n";
 
