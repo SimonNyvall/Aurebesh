@@ -9,6 +9,8 @@
 #include <cctype>
 #include <regex>
 #include "input.hpp"
+#include <asm-generic/ioctls.h>
+#include <sys/ioctl.h>
 
 std::vector<std::string> getPATHCommands()
 {
@@ -204,7 +206,11 @@ void printCommands(const std::vector<std::string> &commands)
     }
 
     const int COLUMN_WIDTH = maxLength + 2;
-    const int COMMANDS_PER_LINE = 5;
+
+    struct winsize w;
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+
+    const int COMMANDS_PER_LINE = w.ws_col / COLUMN_WIDTH;
     int count = 0;
 
     std::cout << "\n";
