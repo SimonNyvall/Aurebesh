@@ -52,9 +52,15 @@ const char *CommandHistory::getCommand(int position)
 
 void CommandHistory::printHistory()
 {
-    for (int i = 0; i < history.size(); i++)
+    if (history.size() == 0)
     {
-        std::cout << i + 1 << " " << history[i] << std::endl;
+        std::cout << "No commands in history" << std::endl;
+        return;
+    }
+
+    for (std::size_t i = 0; i < history.size(); i++)
+    {
+        std::cout << i + 1 << ": " << history[i] << std::endl;
     }
 }
 

@@ -75,7 +75,7 @@ int shell_write(char **args)
     return 1;
 }
 
-int shell_history(char **args) //! Command is broken
+int shell_history(char **args)
 {
     if (args[1] == nullptr)
     {
