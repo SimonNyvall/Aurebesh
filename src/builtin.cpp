@@ -30,7 +30,8 @@ int shell_cd(char **args)
 {
     if (args[1] == nullptr)
     {
-        std::cerr << "shell: expected argument to \"cd\"" << std::endl;
+        char *homePath = getenv("HOME");
+        chdir(homePath);
     }
     else
     {
