@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <cctype>
 #include <regex>
-#include "input.hpp"
+#include "IO.hpp"
 #include <asm-generic/ioctls.h>
 #include <sys/ioctl.h>
 

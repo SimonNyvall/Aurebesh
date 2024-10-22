@@ -7,7 +7,7 @@
 #include <iomanip>
 #include <algorithm>
 #include <cctype>
-#include "input.hpp"
+#include "IO.hpp"
 
 std::vector<std::string> getDirectoriesCommands(const std::filesystem::path &path)
 {
@@ -70,8 +70,20 @@ std::vector<std::string> tabCdHandler(std::string buffer)
         }
     }
 
-    if (matchingPaths.size() == 0)
+    if (matchingPaths.empty())
     {
+        std::string commonPrefix = findComonPrefix(dirs);
+
+        if (commonPrefix == currentBufferPath)
+        {
+            printCdPaths(matchingPaths);
+        }
+
+        if (!commonPrefix.empty())
+        {
+            return {commonPrefix};
+        }
+
         return std::vector<std::string>();
     }
 

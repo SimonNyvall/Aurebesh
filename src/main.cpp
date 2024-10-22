@@ -4,7 +4,7 @@
 #include <string>
 #include "shell.hpp"
 #include "prompt/prompt.hpp"
-#include "input/input.hpp"
+#include "IO/IO.hpp"
 
 void shellLoop()
 {

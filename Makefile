@@ -2,18 +2,25 @@ CC = g++
 
 CFLAGS = -Wall -g
 
-TARGET = mudshell
+TARGET = dash
 
 # Source files
 SRCS = src/main.cpp \
-       src/builtin.cpp \
        src/execution.cpp \
        src/history/commandHistory.cpp \
 	   src/prompt/prompt.cpp \
-	   src/input/input.cpp \
-	   src/input/tabCommandHandler.cpp \
-	   src/input/tabCdHandler.cpp \
-	   src/input/pathHelper.cpp
+	   src/IO/input.cpp \
+	   src/IO/tabCommandHandler.cpp \
+	   src/IO/tabCdHandler.cpp \
+	   src/IO/pathHelper.cpp \
+	   src/IO/parse.cpp \
+	   src/builtin/builtin.cpp \
+	   src/builtin/shellCd.cpp \
+	   src/builtin/shellExit.cpp \
+	   src/builtin/shellHelp.cpp \
+	   src/builtin/shellHistory.cpp \
+	   src/builtin/shellLs.cpp \
+	   src/builtin/shellWrite.cpp \
 
 # Object files
 OBJS = $(SRCS:.cpp=.o)

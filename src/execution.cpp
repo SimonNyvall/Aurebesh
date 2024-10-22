@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
-#include "shell.hpp"
+#include "builtin/builtin.hpp"
 
 int shellLaunch(char **args)
 {
@@ -16,13 +16,13 @@ int shellLaunch(char **args)
     {
         if (execvp(args[0], args) == -1)
         {
-            perror("mudsh");
+            perror("dash");
         }
         exit(EXIT_FAILURE);
     }
     else if (pid < 0)
     {
-        perror("mudsh");
+        perror("dash");
     }
     else
     {
@@ -108,12 +108,12 @@ int executePipeChain(char ***commands, int numCommands)
 
             close(pipefd[0]);
             execvp(commands[i][0], commands[i]);
-            perror("mudsh");
+            perror("dash");
             exit(EXIT_FAILURE);
         }
         else if (pid < 0)
         {
-            perror("mudsh");
+            perror("dash");
             exit(EXIT_FAILURE);
         }
 
