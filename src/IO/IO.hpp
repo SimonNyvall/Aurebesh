@@ -12,7 +12,7 @@
     * 
     * @return A vector of strings containing the possible commands
 */
-std::vector<std::string> tabCommandHandler(std::string buffer);
+std::vector<std::string> tabCommandHandler(std::string buffer, int cursorPosition);
 void printCommands(const std::vector<std::string> &commands);
 
 /*

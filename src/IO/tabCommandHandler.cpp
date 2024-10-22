@@ -96,16 +96,32 @@ std::vector<std::string> getCommandsFromPath(std::string path)
     return commands;
 }
 
-std::vector<std::string> tabCommandHandler(std::string buffer)
+std::vector<std::string> tabCommandHandler(std::string buffer, int cursorPosition)
 {
     std::vector<std::string> commands;
+    std::string bufferPart = buffer.substr(0, cursorPosition);
 
-    std::regex pathRegex(R"(\.\.\/[^ ]+|\.\.\/|\.\/[^ ]+|\.\/)"); //! This does not match the '-' character
-    std::smatch match;
+    std::regex pathRegex(R"(\.\.\/[^ ]+|\.\.\/|\.\/[^ ]+|\.\/|[^ ]+\/[^ ]*)");
+    std::sregex_iterator it(bufferPart.begin(), bufferPart.end(), pathRegex);
+    std::sregex_iterator end;
 
-    if (std::regex_search(buffer, match, pathRegex))
+    std::smatch closestMatch;
+
+    if (std::regex_search(bufferPart, closestMatch, pathRegex))
     {
-        std::string pathPart = match.str(0);
+        std::string pathPart;
+        while (it != end)
+        {
+            std::smatch match = *it;
+            if (match.position(0) + match.length(0) == bufferPart.length())
+            {
+                pathPart = match.str(0);
+                closestMatch = match;
+                break;
+            }
+
+            ++it;
+        }
 
         std::filesystem::path currentPath = std::filesystem::current_path();
         std::filesystem::path fullPath = currentPath / pathPart;

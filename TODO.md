@@ -1,4 +1,4 @@
-[ ] - Tab for rm does not work right. rm ./someFile.txt ./This-is-the-part-that-is-not-working
+[x] - Tab for rm does not work right. rm ./someFile.txt ./This-is-the-part-that-is-not-working
 [ ] - Cd command should work like zoxide, need some DB for that, maybe Valkey?
 [ ] - &&, &, >>, > needs to be implemeted in the exection bit.
 [ ] - Issues with the tab for cd commands.

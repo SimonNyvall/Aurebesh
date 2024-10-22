@@ -254,7 +254,7 @@ std::string readLine()
             }
             else
             {
-                std::vector<std::string> commands = tabCommandHandler(buffer);
+                std::vector<std::string> commands = tabCommandHandler(buffer, position);
 
                 if (commands.size() == 1)
                 {
