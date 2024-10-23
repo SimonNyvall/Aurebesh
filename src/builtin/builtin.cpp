@@ -6,7 +6,8 @@ const char *builtIn_string[] = {
     "help",
     "write",
     "history",
-    "ls"};
+    "ls",
+    "grep"};
 
 int (*builtIn_string_func[])(char **) = { //* Function pointers (Do not forget to add the function pointer to shell.hpp)
     &shell_cd,
@@ -14,7 +15,8 @@ int (*builtIn_string_func[])(char **) = { //* Function pointers (Do not forget t
     &shell_help,
     &shell_write,
     &shell_history,
-    &shell_ls};
+    &shell_ls,
+    &shell_grep};
 
 int shell_num_builtins()
 {

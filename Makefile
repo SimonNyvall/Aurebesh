@@ -14,6 +14,7 @@ SRCS = src/main.cpp \
 	   src/IO/tabCdHandler.cpp \
 	   src/IO/pathHelper.cpp \
 	   src/IO/parse.cpp \
+	   src/IO/commandColorWrap.cpp \
 	   src/builtin/builtin.cpp \
 	   src/builtin/shellCd.cpp \
 	   src/builtin/shellExit.cpp \
@@ -21,6 +22,7 @@ SRCS = src/main.cpp \
 	   src/builtin/shellHistory.cpp \
 	   src/builtin/shellLs.cpp \
 	   src/builtin/shellWrite.cpp \
+	   src/builtin/shellGrep.cpp \
 
 # Object files
 OBJS = $(SRCS:.cpp=.o)
