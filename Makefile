@@ -2,7 +2,7 @@ CC = g++
 
 CFLAGS = -Wall -g
 
-TARGET = dash
+TARGET = aurebesh
 
 # Source files
 SRCS = src/main.cpp \

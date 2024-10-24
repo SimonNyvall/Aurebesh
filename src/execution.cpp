@@ -16,13 +16,13 @@ int shellLaunch(char **args)
     {
         if (execvp(args[0], args) == -1)
         {
-            perror("dash");
+            perror("aurebesh");
         }
         exit(EXIT_FAILURE);
     }
     else if (pid < 0)
     {
-        perror("dash");
+        perror("aurebesh");
     }
     else
     {
@@ -108,12 +108,12 @@ int executePipeChain(char ***commands, int numCommands)
 
             close(pipefd[0]);
             execvp(commands[i][0], commands[i]);
-            perror("dash");
+            perror("aurebesh");
             exit(EXIT_FAILURE);
         }
         else if (pid < 0)
         {
-            perror("dash");
+            perror("aurebesh");
             exit(EXIT_FAILURE);
         }
 
