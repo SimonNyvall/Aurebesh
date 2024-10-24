@@ -12,7 +12,7 @@
 #include <asm-generic/ioctls.h>
 #include <sys/ioctl.h>
 
-std::vector<std::string> getPATHCommands()
+std::vector<std::string> getSystemCommands()
 {
     std::vector<std::string> commands;
 
@@ -58,7 +58,7 @@ std::vector<std::string> getPATHCommands()
     return commands;
 }
 
-std::vector<std::string> getCommandsFromPath(std::string path)
+std::vector<std::string> getLocalCommands(std::string path)
 {
     std::vector<std::string> commands;
 
@@ -126,7 +126,7 @@ std::vector<std::string> tabCommandHandler(std::string buffer, int cursorPositio
         std::filesystem::path currentPath = std::filesystem::current_path();
         std::filesystem::path fullPath = currentPath / pathPart;
 
-        commands = getCommandsFromPath(fullPath.parent_path().string());
+        commands = getLocalCommands(fullPath.parent_path().string());
 
         std::string currentCommand = fullPath.filename().string();
         std::string currentCommandLower = toLower(currentCommand);
@@ -165,7 +165,7 @@ std::vector<std::string> tabCommandHandler(std::string buffer, int cursorPositio
     }
     else
     {
-        commands = getPATHCommands();
+        commands = getSystemCommands();
     }
 
     if (commands.empty())

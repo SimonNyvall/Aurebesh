@@ -14,6 +14,7 @@ SRCS = src/main.cpp \
 	   src/IO/tabCdHandler.cpp \
 	   src/IO/pathHelper.cpp \
 	   src/IO/parse.cpp \
+	   src/IO/commandColorWrap.cpp \
 	   src/builtin/builtin.cpp \
 	   src/builtin/shellCd.cpp \
 	   src/builtin/shellExit.cpp \

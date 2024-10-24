@@ -25,19 +25,101 @@ void disableRawMode(struct termios &orig_termios)
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
 }
 
-void refreshLine(const char *promt, std::string buffer, int position)
+bool isAtAnsiEscapeSequenceBackwards(const std::string &buffer, std::size_t position)
+{
+    if (position == 0)
+    {
+        return false;
+    }
+
+    if (buffer[position - 1] == 'm')
+    {
+        std::size_t start = position - 2;
+
+        while (start > 0 && buffer[start] != '\033')
+        {
+            start--;
+        }
+
+        return start >= 0 && buffer[start] == '\033' && buffer[start + 1] == '[';
+    }
+
+    return false;
+}
+
+bool isAtAnsiEscapeSequenceForwards(const std::string &buffer, std::size_t position)
+{
+    // Check if position is within bounds
+    if (position >= buffer.size())
+    {
+        return false;
+    }
+
+    // Check if the current character starts an ANSI escape sequence
+    return buffer[position] == '\033' && 
+           position + 1 < buffer.size() && 
+           buffer[position + 1] == '[';
+}
+
+std::size_t getAnsiEscapeSequenceLengthBackwards(const std::string &buffer, std::size_t position)
+{
+    if (position < 2 || !isAtAnsiEscapeSequenceBackwards(buffer, position))
+    {
+        return 0;
+    }
+
+    std::size_t start = position - 2;
+    std::size_t end = position;
+
+    while (start > 0 && buffer[start - 1] != '\033')
+    {
+        start--;
+    }
+
+    return end - start + 1;
+}
+
+std::size_t getAnsiEscapeSequenceLengthForwards(const std::string &buffer, std::size_t position)
+{
+    if (position >= buffer.size() || !isAtAnsiEscapeSequenceForwards(buffer, position))
+    {
+        return 0;
+    }
+
+    std::size_t end = position + 2; 
+
+    while (end < buffer.size() && buffer[end] != 'm')
+    {
+        end++;
+    }
+
+    return (end < buffer.size() && buffer[end] == 'm') ? (end - position + 1) : 0;
+}
+
+void refreshLine(const char *prompt, std::string buffer, int position)
 {
     std::cout << "\r\033[K"; // Clear the current line
-    std::cout << promt << buffer;
+    std::cout << prompt << buffer; 
 
-    Prompt &prompt = Prompt::getInstance();
-    int visiableLength = prompt.length();
+    int len = buffer.length();
+    int adjustedPosition = position;
 
-    int len = buffer.size();
-
-    if (position < len)
+    for (int i = position; i < len; ++i)
     {
-        for (int i = len; i > position; --i)
+        if (buffer[i] == '\033')
+        {
+            std::size_t ansiLength = getAnsiEscapeSequenceLengthForwards(buffer, i);
+            if (ansiLength > 0)
+            {
+                adjustedPosition += ansiLength; 
+                i += ansiLength - 1;
+            }
+        }
+    }
+
+    if (adjustedPosition < len)
+    {
+        for (int i = len; i > adjustedPosition; --i)
         {
             std::cout << "\b";
         }
@@ -121,8 +203,27 @@ std::string handleEscChars(std::string buffer, int *position, int *historyPositi
     {
         if (*position > 0)
         {
-            std::cout << "\033[D"; // Move cursor left
-            (*position)--;
+            // Move cursor back by one character first
+            std::size_t currentPos = *position - 1; // Check the position before decrementing
+
+            // Keep track of the initial position
+            std::size_t initialPos = currentPos;
+
+            while (currentPos > 0 && isAtAnsiEscapeSequenceBackwards(buffer, currentPos))
+            {
+                std::size_t ansiLength = getAnsiEscapeSequenceLengthBackwards(buffer, currentPos);
+                currentPos -= ansiLength; // Move cursor to the left of the escape sequence
+            }
+
+            // Update the position after skipping the ANSI escape sequence
+            *position = currentPos;
+
+            // Ensure position doesn't go negative
+            if (*position < 0)
+                *position = 0;
+
+            // Output the left arrow movement in the terminal
+            std::cout << "\033[D"; // Move cursor left visually
         }
     }
 
@@ -130,8 +231,25 @@ std::string handleEscChars(std::string buffer, int *position, int *historyPositi
     {
         if (*position < buffer.size())
         {
-            std::cout << buffer[*position];
-            (*position)++;
+            // Check if we're currently at an ANSI escape sequence
+            if (isAtAnsiEscapeSequenceForwards(buffer, *position))
+            {
+                // Skip over the entire escape sequence
+                std::size_t ansiLength = getAnsiEscapeSequenceLengthForwards(buffer, *position);
+                *position += ansiLength; // Move cursor to the end of the escape sequence
+            }
+            else
+            {
+                // Move cursor forward by one character
+                (*position)++;
+            }
+
+            // Ensure position doesn't exceed buffer size
+            if (*position > buffer.size())
+                *position = buffer.size();
+
+            // Output the right arrow movement in the terminal
+            std::cout << "\033[C"; // Move cursor right visually
         }
     }
 
@@ -210,6 +328,7 @@ std::string readLine()
             globalCommandHistory.addCommand(command);
 
             historyPosition = 0;
+            buffer = sanitizeCommandFromColor(buffer, &position);
 
             return buffer;
         }
@@ -221,8 +340,31 @@ std::string readLine()
         {
             if (!buffer.empty() && position > 0)
             {
-                buffer.erase(position - 1, 1);
-                position--;
+                if (position >= 2 && buffer[position - 1] == 'm')
+                {
+                    std::size_t startPosition = buffer.rfind("\033[", position - 1);
+                    if (startPosition != std::string::npos && position - startPosition <= 7)
+                    {
+                        if (startPosition > 0)
+                        {
+                            buffer.erase(startPosition - 1, (position - startPosition) + 1);
+                            position = startPosition - 1;
+                        }
+                    }
+                    else
+                    {
+                        buffer.erase(position - 1, 1);
+                        position--;
+                    }
+                }
+                else
+                {
+                    buffer.erase(position - 1, 1);
+                    position--;
+                }
+
+                buffer = sanitizeCommandFromColor(buffer, &position);
+                buffer = wrapCommandIntoColor(buffer, &position);
 
                 refreshLine(prompt.c_str(), buffer, position);
             }
@@ -261,6 +403,9 @@ std::string readLine()
                     buffer = commands[0];
                     position = buffer.size();
 
+                    buffer = sanitizeCommandFromColor(buffer, &position);
+                    buffer = wrapCommandIntoColor(buffer, &position);
+
                     refreshLine(prompt.c_str(), buffer, position);
                 }
                 else
@@ -275,6 +420,8 @@ std::string readLine()
         {
             buffer.insert(position, 1, static_cast<char>(c));
             position++;
+
+            buffer = wrapCommandIntoColor(buffer, &position);
 
             refreshLine(prompt.c_str(), buffer, position);
         }

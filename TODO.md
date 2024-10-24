@@ -7,3 +7,4 @@
 [ ] - config file for the prompt
 [x] - clean up of the file structure
 [ ] - update readme and write some docs when the feature planing is done.
+[ ] - Hightligh commands when in the input.

@@ -34,4 +34,8 @@ std::string findComonPrefix(const std::vector<std::string>& strings);
 std::string readLine();
 char ***splitPipe(char *line, int *numCommands);
 
+std::string balanceCommandColor(std::string buffer, int *cursorPosition);
+std::string wrapCommandIntoColor(std::string buffer, int *cursorPosition);
+std::string sanitizeCommandFromColor(std::string buffer, int *cursorPosition);
+
 #endif
