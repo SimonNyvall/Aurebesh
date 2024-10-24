@@ -136,7 +136,7 @@ std::vector<std::string> tabCommandHandler(std::string buffer, int cursorPositio
         {
             std::string commandPart = command;
             std::string commandPartLower = toLower(commandPart);
-            
+
             if (commandPartLower.rfind(currentCommandLower, 0) == 0)
             {
                 std::size_t lastSlashPos = buffer.find_last_of('/');
@@ -150,7 +150,7 @@ std::vector<std::string> tabCommandHandler(std::string buffer, int cursorPositio
         {
             std::string commonPrefix = findComonPrefix(matchingCommands);
 
-            if (buffer == commonPrefix)
+            if (buffer == commonPrefix && !commands.empty())
             {
                 printCommands(matchingCommands);
             }
@@ -196,6 +196,12 @@ std::vector<std::string> tabCommandHandler(std::string buffer, int cursorPositio
 
 void printCommands(const std::vector<std::string> &commands)
 {
+    if (commands.empty())
+    {
+        std::cout << '\n' << "These are not the files you are looking for..." << "\n\n";
+        return;
+    }
+
     if (commands.size() > 100)
     {
         std::cout << '\n'

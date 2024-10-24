@@ -74,7 +74,7 @@ std::vector<std::string> tabCdHandler(std::string buffer)
     {
         std::string commonPrefix = findComonPrefix(dirs);
 
-        if (commonPrefix == currentBufferPath)
+        if (commonPrefix == currentBufferPath && !dirs.empty())
         {
             printCdPaths(matchingPaths);
         }
@@ -92,6 +92,12 @@ std::vector<std::string> tabCdHandler(std::string buffer)
 
 void printCdPaths(const std::vector<std::string> &paths)
 {
+    if (paths.empty())
+    {
+        std::cout << '\n' << "These are not the directories you are looking for..." << "\n\n";
+        return;
+    }
+
     if (paths.size() > 100)
     {
         std::cout << '\n'
