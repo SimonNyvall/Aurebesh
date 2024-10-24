@@ -1,8 +1,9 @@
 <p align="center"><img width="250" src="./images/death_star.png"/></p>
 <h1 align="center">Aurebesh</h1>
 
-<div>
+<div align="center">
     <hr/>
+<img src="https://img.shields.io/github/actions/workflow/status/SimonNyvall/Aurebesh/cmake-multi-platform.yml"/>
 </div>
 
 ## Premise :rocket:
