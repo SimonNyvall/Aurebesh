@@ -52,7 +52,7 @@ void logErrorToFile(std::string location, std::string logLevel, std::string mess
     std::string currentLogLineStr = currentDateTime;
     std::string logLine = currentLogLineStr + " - " + location + " - " + logLevel + " - " + message;
 
-    std::ofstream outFile(ERROR_FILE_PATH);
+    std::ofstream outFile(ERROR_FILE_PATH, std::ios::app);
     outFile << logLine << std::endl;
     outFile.close();
 }
