@@ -11,6 +11,7 @@
 #include "IO.hpp"
 #include <asm-generic/ioctls.h>
 #include <sys/ioctl.h>
+#include "../errorLog/errorLog.hpp"
 
 std::vector<std::string> getSystemCommands()
 {
@@ -50,8 +51,7 @@ std::vector<std::string> getSystemCommands()
         }
         catch (const std::exception &e)
         {
-            std::cerr << '\n'
-                      << "Error accessing directory " << dir << e.what() << '\n';
+            logErrorToFile("tabCommandHandler.cpp", "ERROR", e.what());
         }
     }
 
@@ -90,7 +90,7 @@ std::vector<std::string> getLocalCommands(std::string path)
     }
     catch (const std::filesystem::filesystem_error &e)
     {
-        std::cerr << "Error accessing directory " << path << ": " << e.what() << '\n';
+        logErrorToFile("tabCommandHandler.cpp", "ERROR", e.what());
     }
 
     return commands;

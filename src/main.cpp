@@ -5,6 +5,7 @@
 #include "shell.hpp"
 #include "prompt/prompt.hpp"
 #include "IO/IO.hpp"
+#include "errorLog/errorLog.hpp"
 
 void shellLoop()
 {
@@ -58,6 +59,17 @@ void shellLoop()
 
 int main()
 {
+    if (!doesErrorLogFileExist())
+    {
+        int status = createErrorLogPath();
+        
+        if (status == 1)
+        {
+            return 1;
+        }
+    }
+
     shellLoop();
+
     return 0;
 }

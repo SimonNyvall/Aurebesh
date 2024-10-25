@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cctype>
 #include "IO.hpp"
+#include "../errorLog/errorLog.hpp"
 
 std::vector<std::string> getDirectoriesCommands(const std::filesystem::path &path)
 {
@@ -25,7 +26,7 @@ std::vector<std::string> getDirectoriesCommands(const std::filesystem::path &pat
     }
     catch (const std::exception &e)
     {
-        std::cerr << e.what() << '\n';
+        logErrorToFile("tabCdHandler.cpp", "ERROR", e.what());
     }
 
     return dirs;

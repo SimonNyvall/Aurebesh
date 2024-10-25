@@ -23,6 +23,7 @@ SRCS = src/main.cpp \
 	   src/builtin/shellLs.cpp \
 	   src/builtin/shellWrite.cpp \
 	   src/builtin/shellGrep.cpp \
+	   src/errorLog/errorLog.cpp
 
 # Object files
 OBJS = $(SRCS:.cpp=.o)

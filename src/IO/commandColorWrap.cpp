@@ -4,6 +4,7 @@
 #include <vector>
 #include <filesystem>
 #include <algorithm>
+#include "../errorLog/errorLog.hpp"
 
 const std::string YELLOW_COLOR = "\033[1;33m";
 const std::string RESET_COLOR = "\033[0m";
@@ -111,7 +112,7 @@ std::string wrapCommandIntoColor(std::string buffer, int *cursorPosition)
         }
         catch (const std::filesystem::filesystem_error &e)
         {
-            std::cerr << "Error accessing directory: " << e.what() << std::endl;
+            logErrorToFile("commandColorWrap.cpp", "ERROR", e.what());
         }
     }
 
@@ -128,7 +129,7 @@ std::string wrapCommandIntoColor(std::string buffer, int *cursorPosition)
     }
     catch (const std::filesystem::filesystem_error &e)
     {
-        std::cerr << "Error accessing last directory in PATH: " << e.what() << std::endl;
+        logErrorToFile("commandColorWrap.cpp", "ERROR", e.what());
     }
 
     std::sort(systemCommands.begin(), systemCommands.end());
