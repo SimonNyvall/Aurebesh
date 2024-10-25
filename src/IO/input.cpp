@@ -10,6 +10,9 @@
 #include "../shell.hpp"
 #include "../prompt/prompt.hpp"
 
+std::string tempCommandBuffer;
+bool isStoringCommand = false;
+
 void enableRawMode(struct termios &orig_termios)
 {
     struct termios raw;
@@ -25,53 +28,53 @@ void disableRawMode(struct termios &orig_termios)
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
 }
 
-bool isAtAnsiEscapeSequenceBackwards(const std::string &buffer, std::size_t position)
+bool isAtAnsiEscapeSequenceBackwards(const std::string &inputBuffer, std::size_t cursorPosition)
 {
-    if (position == 0)
+    if (cursorPosition == 0)
     {
         return false;
     }
 
-    if (buffer[position - 1] == 'm')
+    if (inputBuffer[cursorPosition - 1] == 'm')
     {
-        std::size_t start = position - 2;
+        std::size_t start = cursorPosition - 2;
 
-        while (start > 0 && buffer[start] != '\033')
+        while (start > 0 && inputBuffer[start] != '\033')
         {
             start--;
         }
 
-        return start >= 0 && buffer[start] == '\033' && buffer[start + 1] == '[';
+        return start >= 0 && inputBuffer[start] == '\033' && inputBuffer[start + 1] == '[';
     }
 
     return false;
 }
 
-bool isAtAnsiEscapeSequenceForwards(const std::string &buffer, std::size_t position)
+bool isAtAnsiEscapeSequenceForwards(const std::string &inputBuffer, std::size_t cursorPosition)
 {
     // Check if position is within bounds
-    if (position >= buffer.size())
+    if (cursorPosition >= inputBuffer.size())
     {
         return false;
     }
 
     // Check if the current character starts an ANSI escape sequence
-    return buffer[position] == '\033' && 
-           position + 1 < buffer.size() && 
-           buffer[position + 1] == '[';
+    return inputBuffer[cursorPosition] == '\033' && 
+           cursorPosition + 1 < inputBuffer.size() && 
+           inputBuffer[cursorPosition + 1] == '[';
 }
 
-std::size_t getAnsiEscapeSequenceLengthBackwards(const std::string &buffer, std::size_t position)
+std::size_t getAnsiEscapeSequenceLengthBackwards(const std::string &inputBuffer, std::size_t cursorPosition)
 {
-    if (position < 2 || !isAtAnsiEscapeSequenceBackwards(buffer, position))
+    if (cursorPosition < 2 || !isAtAnsiEscapeSequenceBackwards(inputBuffer, cursorPosition))
     {
         return 0;
     }
 
-    std::size_t start = position - 2;
-    std::size_t end = position;
+    std::size_t start = cursorPosition - 2;
+    std::size_t end = cursorPosition;
 
-    while (start > 0 && buffer[start - 1] != '\033')
+    while (start > 0 && inputBuffer[start - 1] != '\033')
     {
         start--;
     }
@@ -96,19 +99,19 @@ std::size_t getAnsiEscapeSequenceLengthForwards(const std::string &buffer, std::
     return (end < buffer.size() && buffer[end] == 'm') ? (end - position + 1) : 0;
 }
 
-void refreshLine(const char *prompt, std::string buffer, int position)
+void refreshLine(const char *prompt, std::string inputBuffer, int cursorPosition)
 {
     std::cout << "\r\033[K"; // Clear the current line
-    std::cout << prompt << buffer; 
+    std::cout << prompt << inputBuffer; 
 
-    int len = buffer.length();
-    int adjustedPosition = position;
+    int len = inputBuffer.length();
+    int adjustedPosition = cursorPosition;
 
-    for (int i = position; i < len; ++i)
+    for (int i = cursorPosition; i < len; ++i)
     {
-        if (buffer[i] == '\033')
+        if (inputBuffer[i] == '\033')
         {
-            std::size_t ansiLength = getAnsiEscapeSequenceLengthForwards(buffer, i);
+            std::size_t ansiLength = getAnsiEscapeSequenceLengthForwards(inputBuffer, i);
             if (ansiLength > 0)
             {
                 adjustedPosition += ansiLength; 
@@ -126,7 +129,7 @@ void refreshLine(const char *prompt, std::string buffer, int position)
     }
 }
 
-std::string handleEscChars(std::string buffer, int *position, int *historyPosition)
+std::string handleEscChars(std::string inputBuffer, int *cursorPosition, int *historyPosition)
 {
     char seq[3];
     seq[0] = getchar();
@@ -136,14 +139,14 @@ std::string handleEscChars(std::string buffer, int *position, int *historyPositi
 
     if (seq[0] != '[')
     {
-        return buffer;
+        return inputBuffer;
     }
 
     if (seq[1] == 'A') // Up arrow
     {
         if (globalCommandHistory.size() == *historyPosition)
         {
-            return buffer;
+            return inputBuffer;
         }
 
         *historyPosition = *historyPosition + 1;
@@ -152,7 +155,14 @@ std::string handleEscChars(std::string buffer, int *position, int *historyPositi
 
         if (!lastCommand)
         {
-            return buffer;
+            return inputBuffer;
+        }
+
+        if (!isStoringCommand)
+        {
+            tempCommandBuffer = inputBuffer;
+            //std::cout << tempCommand << std::endl;
+            isStoringCommand = true;
         }
 
         std::cout << "\r\033[K"; // Clear the current line
@@ -160,22 +170,25 @@ std::string handleEscChars(std::string buffer, int *position, int *historyPositi
 
         std::cout << lastCommand;
 
-        buffer = lastCommand;
+        inputBuffer = lastCommand;
 
-        *position = buffer.size();
+        *cursorPosition = inputBuffer.size();
 
-        return buffer;
+        return inputBuffer;
     }
 
     if (seq[1] == 'B') // Down arrow
     {
-        if (*historyPosition == 1) //? This should not clear the last command but give me the buffer written before accessing the history
+        if (*historyPosition == 1)
         {
             std::cout << "\r\033[K"; // Clear the current line
-            prompt.printPrompt();
+            std::cout << prompt.getPrompt() << tempCommandBuffer;
+            *cursorPosition = tempCommandBuffer.size();
+
             *historyPosition = *historyPosition - 1;
 
-            return buffer;
+            isStoringCommand = false;
+            return tempCommandBuffer;
         }
 
         *historyPosition = *historyPosition - 1;
@@ -184,7 +197,7 @@ std::string handleEscChars(std::string buffer, int *position, int *historyPositi
 
         if (!lastCommand)
         {
-            return buffer;
+            return inputBuffer;
         }
 
         std::cout << "\r\033[K"; // Clear the current line
@@ -192,35 +205,35 @@ std::string handleEscChars(std::string buffer, int *position, int *historyPositi
 
         std::cout << lastCommand;
 
-        buffer = lastCommand;
+        inputBuffer = lastCommand;
 
-        *position = buffer.size();
+        *cursorPosition = inputBuffer.size();
 
-        return buffer;
+        return inputBuffer;
     }
 
     if (seq[1] == 'D') //* Left arrow
     {
-        if (*position > 0)
+        if (*cursorPosition > 0)
         {
             // Move cursor back by one character first
-            std::size_t currentPos = *position - 1; // Check the position before decrementing
+            std::size_t currentPos = *cursorPosition - 1; // Check the position before decrementing
 
             // Keep track of the initial position
             std::size_t initialPos = currentPos;
 
-            while (currentPos > 0 && isAtAnsiEscapeSequenceBackwards(buffer, currentPos))
+            while (currentPos > 0 && isAtAnsiEscapeSequenceBackwards(inputBuffer, currentPos))
             {
-                std::size_t ansiLength = getAnsiEscapeSequenceLengthBackwards(buffer, currentPos);
+                std::size_t ansiLength = getAnsiEscapeSequenceLengthBackwards(inputBuffer, currentPos);
                 currentPos -= ansiLength; // Move cursor to the left of the escape sequence
             }
 
             // Update the position after skipping the ANSI escape sequence
-            *position = currentPos;
+            *cursorPosition = currentPos;
 
             // Ensure position doesn't go negative
-            if (*position < 0)
-                *position = 0;
+            if (*cursorPosition < 0)
+                *cursorPosition = 0;
 
             // Output the left arrow movement in the terminal
             std::cout << "\033[D"; // Move cursor left visually
@@ -229,24 +242,24 @@ std::string handleEscChars(std::string buffer, int *position, int *historyPositi
 
     if (seq[1] == 'C') // Right arrow
     {
-        if (*position < buffer.size())
+        if (*cursorPosition < inputBuffer.size())
         {
             // Check if we're currently at an ANSI escape sequence
-            if (isAtAnsiEscapeSequenceForwards(buffer, *position))
+            if (isAtAnsiEscapeSequenceForwards(inputBuffer, *cursorPosition))
             {
                 // Skip over the entire escape sequence
-                std::size_t ansiLength = getAnsiEscapeSequenceLengthForwards(buffer, *position);
-                *position += ansiLength; // Move cursor to the end of the escape sequence
+                std::size_t ansiLength = getAnsiEscapeSequenceLengthForwards(inputBuffer, *cursorPosition);
+                *cursorPosition += ansiLength; // Move cursor to the end of the escape sequence
             }
             else
             {
                 // Move cursor forward by one character
-                (*position)++;
+                (*cursorPosition)++;
             }
 
             // Ensure position doesn't exceed buffer size
-            if (*position > buffer.size())
-                *position = buffer.size();
+            if (*cursorPosition > inputBuffer.size())
+                *cursorPosition = inputBuffer.size();
 
             // Output the right arrow movement in the terminal
             std::cout << "\033[C"; // Move cursor right visually
@@ -259,13 +272,13 @@ std::string handleEscChars(std::string buffer, int *position, int *historyPositi
 
         if (t == '~')
         {
-            *position = 0;
+            *cursorPosition = 0;
 
             std::cout << "\r\033[K"; // Clear the current line
             prompt.printPrompt();
-            std::cout << buffer;
+            std::cout << inputBuffer;
 
-            for (int i = 0; i < buffer.size(); i++)
+            for (int i = 0; i < inputBuffer.size(); i++)
             {
                 std::cout << '\b';
             }
@@ -278,23 +291,23 @@ std::string handleEscChars(std::string buffer, int *position, int *historyPositi
 
         if (t == '~')
         {
-            *position = buffer.size();
+            *cursorPosition = inputBuffer.size();
 
             std::cout << "\r\033[K"; // Clear the current line
             prompt.printPrompt();
-            std::cout << buffer;
+            std::cout << inputBuffer;
         }
     }
 
-    return buffer;
+    return inputBuffer;
 }
 
 std::string readLine()
 {
-    std::string buffer;
-    int c;
+    std::string inputBuffer;
+    int inputCharacter;
     struct termios orig_termios;
-    int position = 0;
+    int cursorPosition = 0;
     int historyPosition = 0;
 
     enableRawMode(orig_termios);
@@ -306,11 +319,11 @@ std::string readLine()
 
     while (true)
     {
-        c = getchar();
+        inputCharacter = getchar();
 
-        if (c == EOF || c == '\n') //* Check for EOF or Enter key
+        if (inputCharacter == EOF || inputCharacter == '\n') //* Check for EOF or Enter key
         {
-            if (buffer.size() == 0)
+            if (inputBuffer.size() == 0)
             {
                 std::cout << '\n';
             }
@@ -319,111 +332,111 @@ std::string readLine()
 
             disableRawMode(orig_termios);
 
-            if (buffer.empty())
+            if (inputBuffer.empty())
             {
                 return std::string();
             }
 
-            char *command = strdup(buffer.c_str());
+            char *command = strdup(inputBuffer.c_str());
             globalCommandHistory.addCommand(command);
 
             historyPosition = 0;
-            buffer = sanitizeCommandFromColor(buffer, &position);
+            inputBuffer = sanitizeCommandFromColor(inputBuffer, &cursorPosition);
 
-            return buffer;
+            return inputBuffer;
         }
-        else if (c == '\033') //* ESC key
+        else if (inputCharacter == '\033') //* ESC key
         {
-            buffer = handleEscChars(buffer, &position, &historyPosition);
+            inputBuffer = handleEscChars(inputBuffer, &cursorPosition, &historyPosition);
         }
-        else if (c == 127) //* Backspace key
+        else if (inputCharacter == 127) //* Backspace key
         {
-            if (!buffer.empty() && position > 0)
+            if (!inputBuffer.empty() && cursorPosition > 0)
             {
-                if (position >= 2 && buffer[position - 1] == 'm')
+                if (cursorPosition >= 2 && inputBuffer[cursorPosition - 1] == 'm')
                 {
-                    std::size_t startPosition = buffer.rfind("\033[", position - 1);
-                    if (startPosition != std::string::npos && position - startPosition <= 7)
+                    std::size_t startPosition = inputBuffer.rfind("\033[", cursorPosition - 1);
+                    if (startPosition != std::string::npos && cursorPosition - startPosition <= 7)
                     {
                         if (startPosition > 0)
                         {
-                            buffer.erase(startPosition - 1, (position - startPosition) + 1);
-                            position = startPosition - 1;
+                            inputBuffer.erase(startPosition - 1, (cursorPosition - startPosition) + 1);
+                            cursorPosition = startPosition - 1;
                         }
                     }
                     else
                     {
-                        buffer.erase(position - 1, 1);
-                        position--;
+                        inputBuffer.erase(cursorPosition - 1, 1);
+                        cursorPosition--;
                     }
                 }
                 else
                 {
-                    buffer.erase(position - 1, 1);
-                    position--;
+                    inputBuffer.erase(cursorPosition - 1, 1);
+                    cursorPosition--;
                 }
 
-                buffer = sanitizeCommandFromColor(buffer, &position);
-                buffer = wrapCommandIntoColor(buffer, &position);
+                inputBuffer = sanitizeCommandFromColor(inputBuffer, &cursorPosition);
+                inputBuffer = wrapCommandIntoColor(inputBuffer, &cursorPosition);
 
-                refreshLine(prompt.c_str(), buffer, position);
+                refreshLine(prompt.c_str(), inputBuffer, cursorPosition);
             }
         }
-        else if (c == 9) //* Tab key
+        else if (inputCharacter == 9) //* Tab key
         {
             std::regex cdRegex(R"(cd\s+)");
 
-            if (std::regex_search(buffer, cdRegex))
+            if (std::regex_search(inputBuffer, cdRegex))
             {
-                int cdPos = buffer.find("cd ");
-                std::string bufferCopy = buffer.substr(cdPos + buffer.size() - cdPos);
+                int cdPos = inputBuffer.find("cd ");
+                std::string bufferCopy = inputBuffer.substr(cdPos + inputBuffer.size() - cdPos);
 
-                std::vector<std::string> paths = tabCdHandler(buffer);
+                std::vector<std::string> paths = tabCdHandler(inputBuffer);
 
                 if (paths.size() == 1)
                 {
-                    buffer = paths[0];
-                    position = buffer.size();
+                    inputBuffer = paths[0];
+                    cursorPosition = inputBuffer.size();
 
-                    refreshLine(prompt.c_str(), buffer, position);
+                    refreshLine(prompt.c_str(), inputBuffer, cursorPosition);
                 }
                 else
                 {
                     printCdPaths(paths);
 
-                    std::cout << prompt << buffer;
+                    std::cout << prompt << inputBuffer;
                 }
             }
             else
             {
-                std::vector<std::string> commands = tabCommandHandler(buffer, position);
+                std::vector<std::string> commands = tabCommandHandler(inputBuffer, cursorPosition);
 
                 if (commands.size() == 1)
                 {
-                    buffer = commands[0];
-                    position = buffer.size();
+                    inputBuffer = commands[0];
+                    cursorPosition = inputBuffer.size();
 
-                    buffer = sanitizeCommandFromColor(buffer, &position);
-                    buffer = wrapCommandIntoColor(buffer, &position);
+                    inputBuffer = sanitizeCommandFromColor(inputBuffer, &cursorPosition);
+                    inputBuffer = wrapCommandIntoColor(inputBuffer, &cursorPosition);
 
-                    refreshLine(prompt.c_str(), buffer, position);
+                    refreshLine(prompt.c_str(), inputBuffer, cursorPosition);
                 }
                 else
                 {
                     printCommands(commands);
 
-                    std::cout << prompt << buffer;
+                    std::cout << prompt << inputBuffer;
                 }
             }
         }
         else
         {
-            buffer.insert(position, 1, static_cast<char>(c));
-            position++;
+            inputBuffer.insert(cursorPosition, 1, static_cast<char>(inputCharacter));
+            cursorPosition++;
 
-            buffer = wrapCommandIntoColor(buffer, &position);
+            inputBuffer = wrapCommandIntoColor(inputBuffer, &cursorPosition);
 
-            refreshLine(prompt.c_str(), buffer, position);
+            refreshLine(prompt.c_str(), inputBuffer, cursorPosition);
         }
     }
 }
